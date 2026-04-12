@@ -165,20 +165,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 28),
-                Row(children: [
-                  Expanded(child: Container(height: 1, color: AppColors.outlineVariant.withValues(alpha: 0.3))),
-                  Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('OR CONTINUE WITH', style: GoogleFonts.manrope(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 2, color: AppColors.onSurfaceVariant.withValues(alpha: 0.5)))),
-                  Expanded(child: Container(height: 1, color: AppColors.outlineVariant.withValues(alpha: 0.3))),
-                ]),
-                const SizedBox(height: 20),
-                Row(children: [
-                  Expanded(child: _socialBtn('Google', Icons.g_mobiledata)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _socialBtn('Apple', Icons.apple)),
-                ]),
-                const SizedBox(height: 28),
+                const SizedBox(height: 32),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Text("Don't have an account?  ", style: GoogleFonts.manrope(fontSize: 14, color: AppColors.onSurfaceVariant)),
                   GestureDetector(
@@ -196,31 +183,4 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _label(String t) => Text(t, style: GoogleFonts.manrope(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.onSurfaceVariant));
-
-  Widget _socialBtn(String label, IconData icon) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHigh.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.1)),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () async {
-            // Social login → demo offline session
-            try { await ref.read(sesionDaoProvider).createAuthSession(token: 'social_token', nombre: label); } catch (_) {}
-            if (mounted) context.go('/scanner');
-          },
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(icon, color: AppColors.onSurface, size: 22),
-            const SizedBox(width: 8),
-            Text(label, style: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.onSurface)),
-          ]),
-        ),
-      ),
-    );
-  }
 }

@@ -148,6 +148,8 @@ class AccountScreen extends ConsumerWidget {
                   if (session?.clienteId != null) {
                     await ref.read(historialDaoProvider).clearOrdersForClient(session!.clienteId!);
                   }
+                  await ref.read(carritoDaoProvider).clearCart();
+                  await ref.read(historialDaoProvider).clearAllHistory();
                   await ref.read(sesionDaoProvider).clearSessions();
                   await ref.read(apiClientProvider).clearToken();
                   if (context.mounted) context.go('/');

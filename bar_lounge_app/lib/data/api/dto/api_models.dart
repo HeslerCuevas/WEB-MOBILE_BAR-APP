@@ -232,6 +232,7 @@ class CrearPedidoRequest {
 
   Map<String, dynamic> toJson() => {
         'numero_mesa': numero_mesa,
+        'mesa': numero_mesa,
         'cliente_id': cliente_id,
         'factura_local_uuid': factura_local_uuid,
         'subtotal': subtotal,
@@ -270,6 +271,7 @@ class CrearPedidoResponse {
 // ── 5.2 Add to Order ──────────────────────────────────────
 class AgregarPedidoRequest {
   final int cliente_id;
+  final int numero_mesa;
   final String? comentarios_cocina;
   final double nuevo_subtotal_agregado;
   final double nuevo_impuesto_agregado;
@@ -279,6 +281,7 @@ class AgregarPedidoRequest {
 
   AgregarPedidoRequest({
     required this.cliente_id,
+    required this.numero_mesa,
     this.comentarios_cocina,
     required this.nuevo_subtotal_agregado,
     required this.nuevo_impuesto_agregado,
@@ -289,6 +292,8 @@ class AgregarPedidoRequest {
 
   Map<String, dynamic> toJson() => {
         'cliente_id': cliente_id,
+        'numero_mesa': numero_mesa,
+        'mesa': numero_mesa,
         if (comentarios_cocina != null)
           'comentarios_cocina': comentarios_cocina,
         'nuevo_subtotal_agregado': nuevo_subtotal_agregado,
@@ -384,12 +389,14 @@ class ResumenCuentaResponse {
 
 // ── 6.1 Request Bill ──────────────────────────────────────
 class SolicitarCuentaRequest {
+  final int numero_mesa;
   final String metodo_pago_preferido;
   final double propina_voluntaria_extra;
   final bool requiere_comprobante_fiscal;
   final String? rnc_comprobante;
 
   SolicitarCuentaRequest({
+    required this.numero_mesa,
     required this.metodo_pago_preferido,
     required this.propina_voluntaria_extra,
     required this.requiere_comprobante_fiscal,
@@ -397,6 +404,8 @@ class SolicitarCuentaRequest {
   });
 
   Map<String, dynamic> toJson() => {
+        'numero_mesa': numero_mesa,
+        'mesa': numero_mesa,
         'metodo_pago_preferido': metodo_pago_preferido,
         'propina_voluntaria_extra': propina_voluntaria_extra,
         'requiere_comprobante_fiscal': requiere_comprobante_fiscal,

@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/providers/providers.dart';
 
+import '../../../data/api/dto/api_models.dart';
+
 /// QR Scanner — pulsating frame + manual table entry, fully functional
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
@@ -35,6 +37,44 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     super.dispose();
   }
 
+  Future<void> _processTableLinked(int tableNum) async {
+    final api = ref.read(apiServiceProvider);
+    final session = await ref.read(sesionDaoProvider).getActiveSession();
+    
+    // Call the API
+    final resp = await api.vincularMesa(VincularMesaRequest(
+      codigo_qr_mesa: 'MESA-${tableNum.toString().padLeft(2, '0')}',
+      numero_mesa: tableNum,
+    ));
+
+    // Link locally
+    await ref.read(mesaDaoProvider).linkTable(
+      numeroMesa: tableNum, 
+      codigoQr: 'MESA-${tableNum.toString().padLeft(2, '0')}',
+      facturaUuid: resp.factura_local_uuid_activa,
+    );
+
+    // Sync order if they have one and are a registered user
+    if (resp.factura_local_uuid_activa != null && session?.clienteId != null) {
+      try {
+        final sum = await api.getResumenCuenta(resp.factura_local_uuid_activa!);
+        await ref.read(historialDaoProvider).syncExistingOrder(
+          clienteId: session!.clienteId!,
+          numeroMesa: tableNum,
+          facturaUuid: resp.factura_local_uuid_activa!,
+          subtotal: sum.subtotal_acumulado,
+          totalImpuestos: sum.total_impuestos_acumulado,
+          propinaLegal: sum.propina_legal_acumulada,
+          totalGeneral: sum.total_general_acumulado,
+          estadoCuenta: sum.estado_cuenta,
+          items: sum.items_consumidos,
+        );
+      } catch (e) {
+        debugPrint('Did not sync resume: $e');
+      }
+    }
+  }
+
   Future<void> _confirmTable() async {
     final raw = _tableCtrl.text.trim();
     final tableNum = int.tryParse(raw);
@@ -44,7 +84,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     }
     setState(() { _loading = true; _error = null; });
     try {
-      await ref.read(mesaDaoProvider).linkTable(numeroMesa: tableNum);
+      await _processTableLinked(tableNum);
       if (mounted) context.go('/menu');
     } catch (e) {
       setState(() => _error = 'Failed to link table. Try again.');
@@ -58,7 +98,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     setState(() { _loading = true; _error = null; });
     await Future.delayed(const Duration(milliseconds: 800));
     try {
-      await ref.read(mesaDaoProvider).linkTable(numeroMesa: 5);
+      await _processTableLinked(5);
       if (mounted) context.go('/menu');
     } catch (_) {
       if (mounted) setState(() { _loading = false; _error = 'Failed to scan.'; });

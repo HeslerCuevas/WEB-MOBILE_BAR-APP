@@ -127,6 +127,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     TextButton(
                       onPressed: () async {
                         try {
+                          await ref.read(carritoDaoProvider).clearCart();
+                          await ref.read(historialDaoProvider).clearAllHistory();
+                          await ref.read(sesionDaoProvider).clearSessions();
+                          await ref.read(apiClientProvider).clearToken();
                           await ref.read(sesionDaoProvider).createGuestSession();
                         } catch (_) {}
                         if (context.mounted) context.go('/scanner');

@@ -3,6 +3,8 @@ import '../app_database.dart';
 import '../tables/historial_pedidos.dart';
 import '../tables/historial_detalles.dart';
 
+import '../../api/dto/api_models.dart';
+
 part 'historial_dao.g.dart';
 
 @DriftAccessor(tables: [HistorialPedidos, HistorialDetalles])
@@ -108,5 +110,65 @@ class HistorialDao extends DatabaseAccessor<AppDatabase>
     await (delete(historialPedidos)
           ..where((o) => o.clienteId.equals(clienteId)))
         .go();
+  }
+
+  /// Delete all orders and their details for the entire local database (used for fresh sessions)
+  Future<void> clearAllHistory() async {
+    await delete(historialDetalles).go();
+    await delete(historialPedidos).go();
+  }
+
+  /// Syncs an existing remote order into the local database (called upon login & table scan)
+  Future<void> syncExistingOrder({
+    required int clienteId,
+    required int numeroMesa,
+    required String facturaUuid,
+    required double subtotal,
+    required double totalImpuestos,
+    required double propinaLegal,
+    required double totalGeneral,
+    required String estadoCuenta,
+    required List<ItemConsumidoDto> items,
+  }) async {
+    // Delete any existing conflicting active order for this client
+    await clearOrdersForClient(clienteId);
+
+    // Insert the base order
+    await into(historialPedidos).insert(
+      HistorialPedidosCompanion.insert(
+        facturaLocalUuid: facturaUuid,
+        clienteId: Value(clienteId),
+        numeroMesa: numeroMesa,
+        subtotal: subtotal,
+        totalImpuestos: totalImpuestos,
+        propinaLegal: propinaLegal,
+        totalGeneral: totalGeneral,
+        estadoCuenta: Value(estadoCuenta),
+      ),
+    );
+
+    // Insert the items from the summary
+    final details = items.map((ItemConsumidoDto i) {
+      final subL = i.subtotal_linea;
+      final qty = i.cantidad;
+      // Reverse-engineer approximate values since Gateway /resumen only gives limited info
+      final pU = qty > 0 ? (subL / qty) : 0.0;
+      final mI = subL * 0.18; // approx ITBIS
+      return HistorialDetallesCompanion.insert(
+        detalleLocalUuid: 'resumed-${DateTime.now().millisecondsSinceEpoch}-${i.producto_nombre.hashCode}',
+        facturaLocalUuid: facturaUuid,
+        productoId: 0, // Not provided by resume
+        productoNombre: i.producto_nombre,
+        cantidad: qty,
+        precioUnitario: pU,
+        montoImpuesto: mI,
+        subtotalLinea: subL,
+        estadoPreparacion: Value(i.estado_preparacion),
+      );
+    }).toList();
+
+    if (details.isNotEmpty) {
+      await batch((b) => b.insertAll(historialDetalles, details));
+    }
   }
 }
