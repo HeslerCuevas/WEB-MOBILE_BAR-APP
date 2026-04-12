@@ -131,12 +131,19 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
             child: cartItems.when(
               data: (items) {
                 // Calculate live totals
-                double subtotal = 0;
-                double taxes = 0;
-                for (final i in items) { subtotal += i.subtotalLinea; taxes += i.montoImpuesto; }
-                final legalTip = subtotal * 0.10;
-                final extraTip = _tipPcts[_tipIndex] == -1 ? _customTipAmount : subtotal * _tipPcts[_tipIndex] / 100;
-                final total = subtotal + taxes + legalTip + extraTip;
+                double currentRoundSubtotal = 0;
+                double currentRoundTaxes = 0;
+                for (final i in items) { currentRoundSubtotal += i.subtotalLinea; currentRoundTaxes += i.montoImpuesto; }
+                
+                final baseSubtotal = activeOrder?.subtotal ?? 0.0;
+                final baseTaxes = activeOrder?.totalImpuestos ?? 0.0;
+                
+                final totalSubtotal = baseSubtotal + currentRoundSubtotal;
+                final totalTaxes = baseTaxes + currentRoundTaxes;
+
+                final legalTip = totalSubtotal * 0.10;
+                final extraTip = _tipPcts[_tipIndex] == -1 ? _customTipAmount : totalSubtotal * _tipPcts[_tipIndex] / 100;
+                final total = totalSubtotal + totalTaxes + legalTip + extraTip;
 
                 return SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
@@ -282,9 +289,9 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                         border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.08)),
                       ),
                       child: Column(children: [
-                        _billRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}'),
+                        _billRow('Subtotal', '\$${totalSubtotal.toStringAsFixed(2)}'),
                         const SizedBox(height: 8),
-                        _billRow('ITBIS (18%)', '\$${taxes.toStringAsFixed(2)}'),
+                        _billRow('ITBIS (18%)', '\$${totalTaxes.toStringAsFixed(2)}'),
                         const SizedBox(height: 8),
                         _billRow('Legal Tip (10%)', '\$${legalTip.toStringAsFixed(2)}'),
                         const SizedBox(height: 8),
@@ -587,9 +594,9 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
 
         await historialDao.updateOrderTotals(
           facturaUuid: activeOrder.facturaLocalUuid,
-          newSubtotal: response.nuevo_subtotal,
-          newTotalImpuestos: response.nuevo_total_impuestos,
-          newTotalGeneral: response.nuevo_total_general,
+          newSubtotal: response.nuevo_subtotal ?? double.parse((activeOrder.subtotal + subtotal).toStringAsFixed(2)),
+          newTotalImpuestos: response.nuevo_total_impuestos ?? double.parse((activeOrder.totalImpuestos + totalImpuestos).toStringAsFixed(2)),
+          newTotalGeneral: response.nuevo_total_general ?? double.parse((activeOrder.totalGeneral + totalGeneral).toStringAsFixed(2)),
         );
       }
 

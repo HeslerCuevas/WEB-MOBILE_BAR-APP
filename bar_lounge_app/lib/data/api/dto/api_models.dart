@@ -302,25 +302,23 @@ class AgregarPedidoRequest {
 
 class AgregarPedidoResponse {
   final String mensaje;
-  final double nuevo_subtotal;
-  final double nuevo_total_impuestos;
-  final double nuevo_total_general;
+  final double? nuevo_subtotal;
+  final double? nuevo_total_impuestos;
+  final double? nuevo_total_general;
 
   AgregarPedidoResponse({
     required this.mensaje,
-    required this.nuevo_subtotal,
-    required this.nuevo_total_impuestos,
-    required this.nuevo_total_general,
+    this.nuevo_subtotal,
+    this.nuevo_total_impuestos,
+    this.nuevo_total_general,
   });
 
   factory AgregarPedidoResponse.fromJson(Map<String, dynamic> json) =>
       AgregarPedidoResponse(
-        mensaje: json['mensaje'] as String,
-        nuevo_subtotal: (json['nuevo_subtotal'] as num).toDouble(),
-        nuevo_total_impuestos:
-            (json['nuevo_total_impuestos'] as num).toDouble(),
-        nuevo_total_general:
-            (json['nuevo_total_general'] as num).toDouble(),
+        mensaje: json['mensaje'] as String? ?? 'Añadido a la cuenta',
+        nuevo_subtotal: (json['nuevo_subtotal'] as num?)?.toDouble(),
+        nuevo_total_impuestos: (json['nuevo_total_impuestos'] as num?)?.toDouble(),
+        nuevo_total_general: (json['nuevo_total_general'] as num?)?.toDouble(),
       );
 }
 
