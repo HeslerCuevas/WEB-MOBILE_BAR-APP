@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;700;900&amp;family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error": "#ffb4ab",
+                    "surface-container-lowest": "#0a0e17",
+                    "tertiary-container": "#00a8c0",
+                    "inverse-surface": "#dfe2ef",
+                    "tertiary-fixed-dim": "#00daf8",
+                    "surface-container": "#1c1f29",
+                    "error-container": "#93000a",
+                    "primary": "#ffb693",
+                    "surface-container-high": "#262a34",
+                    "primary-fixed-dim": "#ffb693",
+                    "surface-container-low": "#181b25",
+                    "inverse-primary": "#a04100",
+                    "tertiary-fixed": "#a5eeff",
+                    "on-secondary": "#3c2f00",
+                    "surface-bright": "#353943",
+                    "secondary-container": "#af8d11",
+                    "on-surface": "#dfe2ef",
+                    "on-tertiary-fixed-variant": "#004e5a",
+                    "surface": "#0f131c",
+                    "on-tertiary": "#00363f",
+                    "tertiary": "#00daf8",
+                    "on-primary-container": "#572000",
+                    "on-secondary-container": "#342800",
+                    "secondary": "#e9c349",
+                    "outline": "#a98a7d",
+                    "surface-container-highest": "#31353f",
+                    "primary-container": "#ff6b00",
+                    "on-primary-fixed-variant": "#7a3000",
+                    "surface-tint": "#ffb693",
+                    "outline-variant": "#5a4136",
+                    "on-secondary-fixed": "#241a00",
+                    "on-tertiary-container": "#003740",
+                    "background": "#0f131c",
+                    "on-background": "#dfe2ef",
+                    "secondary-fixed-dim": "#e9c349",
+                    "on-secondary-fixed-variant": "#574500",
+                    "on-surface-variant": "#e2bfb0",
+                    "on-primary": "#561f00",
+                    "surface-variant": "#31353f",
+                    "on-tertiary-fixed": "#001f25",
+                    "on-primary-fixed": "#351000",
+                    "secondary-fixed": "#ffe088",
+                    "primary-fixed": "#ffdbcc",
+                    "on-error-container": "#ffdad6",
+                    "on-error": "#690005",
+                    "inverse-on-surface": "#2c303a",
+                    "surface-dim": "#0f131c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Epilogue"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(53, 57, 67, 0.2);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen flex flex-col selection:bg-primary/30">
+<header class="bg-[#0f131c] w-full top-0 sticky z-50 shadow-[0_20px_40px_rgba(24,27,37,0.4)]">
+<div class="flex items-center justify-between px-6 py-4 w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="text-[#ffb693] active:scale-95 transition-transform hover:bg-[#262a34] transition-colors duration-300 p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+</div>
+<div class="text-[#ffb693] font-['Epilogue'] font-black tracking-widest uppercase text-xl">The Nocturnal</div>
+<div class="w-10"></div>
+</div>
+</header>
+<main class="flex-grow flex items-center justify-center px-6 relative overflow-hidden">
+<div class="absolute inset-0 pointer-events-none">
+<div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/10 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-tertiary/5 blur-[100px] rounded-full"></div>
+</div>
+<div class="w-full max-w-md relative z-10">
+<div class="mb-12 text-center">
+<h1 class="font-headline font-black text-4xl mb-4 tracking-tight leading-tight text-on-background">
+                    Lost in the <span class="text-primary italic">Shadows?</span>
+</h1>
+<p class="font-body text-on-surface-variant leading-relaxed text-lg max-w-[280px] mx-auto">
+                    Provide your credentials to reclaim access to the inner circle.
+                </p>
+</div>
+<div class="glass-panel p-8 rounded-full border border-white/5 shadow-2xl">
+<form class="space-y-8">
+<div class="space-y-2">
+<label class="font-label text-sm font-semibold uppercase tracking-widest text-on-surface-variant ml-1" for="email">Member Email</label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-outline group-focus-within:text-tertiary transition-colors">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+</div>
+<input class="w-full bg-surface-container-lowest border-none ring-1 ring-outline-variant/30 focus:ring-2 focus:ring-tertiary text-on-surface rounded-xl py-4 pl-12 pr-4 transition-all duration-300 placeholder:text-outline-variant/50 shadow-inner" id="email" placeholder="sommelier@nocturnal.bar" type="email"/>
+</div>
+</div>
+<button class="w-full relative overflow-hidden group py-4 rounded-xl font-headline font-bold text-lg transition-all duration-300 bg-gradient-to-br from-[#ffb693] to-[#ff6b00] text-[#561f00] shadow-[0_10px_20px_rgba(255,107,0,0.2)] active:scale-95" type="submit">
+<span class="relative z-10 flex items-center justify-center gap-2">
+                            Send Reset Link
+                            <span class="material-symbols-outlined text-xl" data-icon="send">send</span>
+</span>
+<div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+</button>
+</form>
+<div class="mt-8 flex flex-col items-center gap-6">
+<div class="w-full h-px bg-gradient-to-r from-transparent via-outline-variant/30 to-transparent"></div>
+<a class="group flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors duration-300 font-label tracking-wide uppercase text-sm" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="login">login</span>
+                        Return to <span class="font-bold text-on-surface group-hover:text-primary">Login</span>
+</a>
+</div>
+</div>
+</div>
+</main>
+</body></html>
