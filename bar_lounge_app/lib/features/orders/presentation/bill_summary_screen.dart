@@ -142,6 +142,12 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
         activeOrder?.estadoCuenta == 'POR_FACTURAR' ||
         activeOrder?.estadoCuenta == 'PENDING_PAYMENT';
 
+    if (activeOrder == null && _paymentPending) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _paymentPending = false);
+      });
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -384,136 +390,146 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                         ),
                         const SizedBox(height: 24),
                         // ── Tip Section ──
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.volunteer_activism,
-                              size: 14,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'ADDITIONAL TIP',
-                              style: GoogleFonts.epilogue(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 2,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: List.generate(_tipPcts.length, (i) {
-                            final sel = i == _tipIndex;
-                            return Expanded(
-                              child: GestureDetector(
-                                onTap: (_paymentPending || isOrderLocked) ? null : () => setState(() => _tipIndex = i),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 150),
-                                  margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        sel
-                                            ? AppColors.primaryContainer
-                                            : AppColors.surfaceContainerHigh,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color:
-                                          sel
-                                              ? AppColors.primaryContainer
-                                              : AppColors.outlineVariant
-                                                  .withValues(alpha: 0.15),
+                        Opacity(
+                          opacity: (_paymentPending || isOrderLocked) ? 0.4 : 1.0,
+                          child: IgnorePointer(
+                            ignoring: _paymentPending || isOrderLocked,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.volunteer_activism,
+                                      size: 14,
+                                      color: AppColors.primary,
                                     ),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      _tipPcts[i] == -1
-                                          ? 'Custom'
-                                          : '${_tipPcts[i]}%',
-                                      style: GoogleFonts.manrope(
-                                        fontSize: 12,
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'ADDITIONAL TIP',
+                                      style: GoogleFonts.epilogue(
+                                        fontSize: 10,
                                         fontWeight: FontWeight.w700,
-                                        color:
-                                            sel
-                                                ? AppColors.onPrimaryContainer
-                                                : AppColors.onSurfaceVariant,
+                                        letterSpacing: 2,
+                                        color: AppColors.primary,
                                       ),
                                     ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: List.generate(_tipPcts.length, (i) {
+                                    final sel = i == _tipIndex;
+                                    return Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => setState(() => _tipIndex = i),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 150),
+                                          margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 10,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                sel
+                                                    ? AppColors.primaryContainer
+                                                    : AppColors.surfaceContainerHigh,
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color:
+                                                  sel
+                                                      ? AppColors.primaryContainer
+                                                      : AppColors.outlineVariant
+                                                          .withValues(alpha: 0.15),
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              _tipPcts[i] == -1
+                                                  ? 'Custom'
+                                                  : '${_tipPcts[i]}%',
+                                              style: GoogleFonts.manrope(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w700,
+                                                color:
+                                                    sel
+                                                        ? AppColors.onPrimaryContainer
+                                                        : AppColors.onSurfaceVariant,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ),
+                                if (_tipPcts[_tipIndex] == -1) ...[
+                                  const SizedBox(height: 12),
+                                  TextField(
+                                    controller: _customTipController,
+                                    keyboardType: const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                        RegExp(r'^\d*\.?\d*'),
+                                      ),
+                                    ],
+                                    style: GoogleFonts.manrope(
+                                      color: AppColors.onSurface,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter tip amount',
+                                      hintStyle: GoogleFonts.manrope(
+                                        color: AppColors.onSurfaceVariant,
+                                      ),
+                                      prefixIcon: const Icon(
+                                        Icons.attach_money,
+                                        size: 16,
+                                        color: AppColors.onSurfaceVariant,
+                                      ),
+                                      filled: true,
+                                      fillColor: AppColors.surfaceContainerHigh,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _customTipAmount = double.tryParse(val) ?? 0.0;
+                                      });
+                                    },
+                                  ),
+                                ],
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surfaceContainerHigh,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.payments,
+                                        size: 16,
+                                        color: AppColors.onSurfaceVariant,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Extra tip: \$${extraTip.toStringAsFixed(2)}',
+                                        style: GoogleFonts.manrope(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.onSurface,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                            );
-                          }),
-                        ),
-                        if (_tipPcts[_tipIndex] == -1) ...[
-                          const SizedBox(height: 12),
-                          TextField(
-                            enabled: !(_paymentPending || isOrderLocked),
-                            controller: _customTipController,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
+                              ],
                             ),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d*\.?\d*'),
-                              ),
-                            ],
-                            style: GoogleFonts.manrope(
-                              color: AppColors.onSurface,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Enter tip amount',
-                              hintStyle: GoogleFonts.manrope(
-                                color: AppColors.onSurfaceVariant,
-                              ),
-                              prefixIcon: const Icon(
-                                Icons.attach_money,
-                                size: 16,
-                                color: AppColors.onSurfaceVariant,
-                              ),
-                              filled: true,
-                              fillColor: AppColors.surfaceContainerHigh,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                            onChanged: (val) {
-                              setState(() {
-                                _customTipAmount = double.tryParse(val) ?? 0.0;
-                              });
-                            },
-                          ),
-                        ],
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceContainerHigh,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.payments,
-                                size: 16,
-                                color: AppColors.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Extra tip: \$${extraTip.toStringAsFixed(2)}',
-                                style: GoogleFonts.manrope(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.onSurface,
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                         const SizedBox(height: 20),

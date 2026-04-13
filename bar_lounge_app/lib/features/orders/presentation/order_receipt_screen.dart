@@ -130,12 +130,16 @@ class _ReceiptBody extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'CURRENT SESSION',
+                      (order.estadoCuenta == 'CERRADA' || order.estadoCuenta == 'CERRADO' || order.estadoCuenta == 'PAGADA' || order.estadoCuenta == 'PAGADO')
+                          ? 'ORDER FINALIZED'
+                          : 'CURRENT SESSION',
                       style: GoogleFonts.manrope(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 2,
-                        color: AppColors.secondary,
+                        color: (order.estadoCuenta == 'CERRADA' || order.estadoCuenta == 'CERRADO' || order.estadoCuenta == 'PAGADA' || order.estadoCuenta == 'PAGADO')
+                            ? AppColors.primary
+                            : AppColors.secondary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -149,7 +153,7 @@ class _ReceiptBody extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '$timeLabel — Session',
+                      '$timeLabel — ${(order.estadoCuenta == 'CERRADA' || order.estadoCuenta == 'CERRADO' || order.estadoCuenta == 'PAGADA' || order.estadoCuenta == 'PAGADO') ? 'Final Receipt' : 'Active Session'}',
                       style: GoogleFonts.manrope(
                         fontSize: 12,
                         color: AppColors.onSurfaceVariant,
@@ -321,6 +325,10 @@ class _ReceiptBody extends ConsumerWidget {
         return 'Awaiting payment';
       case 'CERRADA':
       case 'CERRADO':
+      case 'PAGADA':
+      case 'PAGADO':
+      case 'COMPLETADA':
+      case 'COMPLETADO':
         return 'Paid';
       default:
         return 'Session Open';

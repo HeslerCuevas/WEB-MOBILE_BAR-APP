@@ -2,12 +2,13 @@ import 'package:drift/drift.dart';
 import '../app_database.dart';
 import '../tables/historial_pedidos.dart';
 import '../tables/historial_detalles.dart';
+import '../tables/productos_cache.dart';
 
 import '../../api/dto/api_models.dart';
 
 part 'historial_dao.g.dart';
 
-@DriftAccessor(tables: [HistorialPedidos, HistorialDetalles])
+@DriftAccessor(tables: [HistorialPedidos, HistorialDetalles, ProductosCache])
 class HistorialDao extends DatabaseAccessor<AppDatabase>
     with _$HistorialDaoMixin {
   HistorialDao(super.db);
@@ -148,6 +149,9 @@ class HistorialDao extends DatabaseAccessor<AppDatabase>
       ),
     );
 
+    // Load catalog cache to resolve names if the backend returns "Producto <id>" instead of the real name
+    final catalogProducts = await select(productosCache).get();
+
     // Insert the items from the summary
     final details = items.map((ItemConsumidoDto i) {
       final subL = i.subtotal_linea;
@@ -155,11 +159,23 @@ class HistorialDao extends DatabaseAccessor<AppDatabase>
       // Reverse-engineer approximate values since Gateway /resumen only gives limited info
       final pU = qty > 0 ? (subL / qty) : 0.0;
       final mI = subL * 0.18; // approx ITBIS
+
+      String finalName = i.producto_nombre;
+      if (finalName.toLowerCase().startsWith('producto ')) {
+        final possibleId = int.tryParse(finalName.split(' ').last);
+        if (possibleId != null) {
+          final match = catalogProducts.where((p) => p.id == possibleId).firstOrNull;
+          if (match != null) {
+            finalName = match.nombre;
+          }
+        }
+      }
+
       return HistorialDetallesCompanion.insert(
         detalleLocalUuid: 'resumed-${DateTime.now().millisecondsSinceEpoch}-${i.producto_nombre.hashCode}',
         facturaLocalUuid: facturaUuid,
         productoId: 0, // Not provided by resume
-        productoNombre: i.producto_nombre,
+        productoNombre: finalName,
         cantidad: qty,
         precioUnitario: pU,
         montoImpuesto: mI,

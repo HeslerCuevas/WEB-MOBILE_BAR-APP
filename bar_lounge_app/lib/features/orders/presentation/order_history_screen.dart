@@ -224,9 +224,13 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     final date = DateFormat('MMM dd, yyyy').format(order.creadoEn);
     final isClosed = order.estadoCuenta == 'CERRADA' ||
         order.estadoCuenta == 'CERRADO' ||
+        order.estadoCuenta == 'PAGADA' ||
+        order.estadoCuenta == 'PAGADO' ||
+        order.estadoCuenta == 'COMPLETADA' ||
+        order.estadoCuenta == 'COMPLETADO' ||
         order.estadoCuenta == 'PENDING_PAYMENT' ||
         order.estadoCuenta == 'WAITING_PAYMENT';
-    final statusLabel = isClosed ? 'CLOSED' : 'OPEN';
+    final statusLabel = (order.estadoCuenta == 'PAGADA' || order.estadoCuenta == 'PAGADO' || order.estadoCuenta == 'CERRADA' || order.estadoCuenta == 'CERRADO') ? 'PAID' : isClosed ? 'CLOSED' : 'OPEN';
 
     // Build item preview string
     String itemPreview = 'No items';

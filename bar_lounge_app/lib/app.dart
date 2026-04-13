@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'data/providers/providers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -24,7 +25,18 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
       ref.read(catalogSyncProvider).syncCatalog();
     });
 
+    _requestPermissions();
     _setupPaymentListener();
+  }
+
+  void _requestPermissions() async {
+    final messaging = FirebaseMessaging.instance;
+    final settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    debugPrint('[FCM] User granted permission: ${settings.authorizationStatus}');
   }
 
   void _setupPaymentListener() {
@@ -42,6 +54,11 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
         }
 
         try {
+          // IMMEDIATE FEEDBACK for testing
+          scaffoldMessengerKey.currentState?.showSnackBar(
+            const SnackBar(content: Text('Sincronizando pago...'), duration: Duration(seconds: 1)),
+          );
+
           final session = await ref.read(sesionDaoProvider).getActiveSession();
           final orderInDb = await ref.read(historialDaoProvider).getOrderByUuid(uuidRecibido);
           int? clienteId = session?.clienteId ?? orderInDb?.clienteId;
@@ -65,49 +82,159 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
             debugPrint('[FCM] Order $uuidRecibido local database updated to state: ${sum.estado_cuenta}');
 
             // If it's a payment confirmation, do the visual updates and reset the table
-            if (action == 'ORDER_PAID' || sum.estado_cuenta == 'CERRADA' || sum.estado_cuenta == 'CERRADO') {
+            final bool isPaymentSuccess = action == 'ORDER_PAID' || 
+                                         sum.estado_cuenta == 'CERRADA' || 
+                                         sum.estado_cuenta == 'CERRADO' ||
+                                         sum.estado_cuenta == 'PAGADA' ||
+                                         sum.estado_cuenta == 'PAGADO' ||
+                                         sum.estado_cuenta == 'COMPLETADA' ||
+                                         sum.estado_cuenta == 'COMPLETADO';
+
+            if (isPaymentSuccess) {
+              debugPrint('[FCM] Payment success detected for UUID: $uuidRecibido');
               final mesaData = await ref.read(mesaDaoProvider).getActiveMesa();
+              
+              // 1. Logic for data cleanup (specific to table)
               if (mesaData != null && mesaData.facturaLocalUuid == uuidRecibido) {
-                // Clear out the locally active open table
+                debugPrint('[FCM] Target table matched. Clearing active table and cart.');
                 await ref.read(mesaDaoProvider).clearAllActiveMesas();
-
-                // Show global success popup securely
-                scaffoldMessengerKey.currentState?.showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        const Icon(Icons.check_circle, color: Colors.white),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            '¡Pago Confirmado! Tu cuenta ha sido pagada. ¡Gracias por visitarnos!',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ),
-                    backgroundColor: Colors.green.shade600,
-                    behavior: SnackBarBehavior.floating,
-                    margin: const EdgeInsets.all(20),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    duration: const Duration(seconds: 4),
-                  ),
-                );
-
-                // Force UX reset back to Scanner
-                try {
-                  appRouter.go('/scanner');
-                } catch (_) {}
+                await ref.read(carritoDaoProvider).clearCart();
+              } else {
+                debugPrint('[FCM Warning] Table mismatch or no active table. ActiveTableUuid: ${mesaData?.facturaLocalUuid}, ReceivedUuid: $uuidRecibido');
+                // Even if table doesn't match exactly, if syncExistingOrder worked, history is updated.
               }
+
+              // 2. Visual reset and success message (global for the client)
+              debugPrint('[FCM] Triggering UI reset and Success Popup...');
+              
+              // Navigate to scanner first
+              try {
+                if (mounted) {
+                  appRouter.go('/scanner');
+                }
+              } catch (e) {
+                debugPrint('[FCM Error] Navigation to /scanner failed: $e');
+              }
+
+              // Show Dialog in next frame with Root Context
+              Future.delayed(const Duration(milliseconds: 500), () {
+                final rootContext = appRouter.routerDelegate.navigatorKey.currentContext;
+                if (rootContext != null) {
+                  debugPrint('[FCM] Executing _showSuccessDialog on Root Context');
+                  _showSuccessDialog(rootContext);
+                } else {
+                  debugPrint('[FCM Error] Global context for dialog not found. Is appRouter initialized?');
+                  // Absolute fallback: use scaffold messenger
+                  scaffoldMessengerKey.currentState?.showSnackBar(
+                    const SnackBar(content: Text('¡Gracias por tu pago! (Error al mostrar diálogo)')),
+                  );
+                }
+              });
             }
           }
         } catch (e) {
           debugPrint('[FCM Error] Failed to process message: $e');
         }
       });
+
+      // Also listen when app is opened from notification
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        debugPrint('[FCM ON_MESSAGE_OPEN_APP] User tapped notification');
+        // We could trigger the same logic here if needed
+      });
     } catch (_) {
        // Firebase isn't correctly configured yet, swallow gracefully.
     }
+  }
+
+  void _showSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E222D),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Colors.green.withValues(alpha: 0.2), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.green.withValues(alpha: 0.1),
+                blurRadius: 40,
+                spreadRadius: 10,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 64),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'PAYMENT SUCCESSFUL',
+                style: GoogleFonts.epilogue(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 3,
+                  color: Colors.green,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Thank you for ordering!',
+                style: GoogleFonts.epilogue(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'We hope you enjoyed your time at Nocturnal. Looking forward to your next visit!',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.manrope(
+                  fontSize: 14,
+                  color: Colors.white.withValues(alpha: 0.6),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'GO BACK TO SCANNER',
+                    style: GoogleFonts.epilogue(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override

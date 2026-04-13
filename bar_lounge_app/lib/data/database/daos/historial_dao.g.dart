@@ -8,6 +8,8 @@ mixin _$HistorialDaoMixin on DatabaseAccessor<AppDatabase> {
       attachedDatabase.historialPedidos;
   $HistorialDetallesTable get historialDetalles =>
       attachedDatabase.historialDetalles;
+  $CategoriasCacheTable get categoriasCache => attachedDatabase.categoriasCache;
+  $ProductosCacheTable get productosCache => attachedDatabase.productosCache;
   HistorialDaoManager get managers => HistorialDaoManager(this);
 }
 
@@ -23,5 +25,15 @@ class HistorialDaoManager {
       $$HistorialDetallesTableTableManager(
         _db.attachedDatabase,
         _db.historialDetalles,
+      );
+  $$CategoriasCacheTableTableManager get categoriasCache =>
+      $$CategoriasCacheTableTableManager(
+        _db.attachedDatabase,
+        _db.categoriasCache,
+      );
+  $$ProductosCacheTableTableManager get productosCache =>
+      $$ProductosCacheTableTableManager(
+        _db.attachedDatabase,
+        _db.productosCache,
       );
 }

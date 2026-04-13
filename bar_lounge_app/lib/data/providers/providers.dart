@@ -85,7 +85,12 @@ final activeOrderProvider = StreamProvider<HistorialPedido?>((ref) {
   );
   return ref.watch(historialDaoProvider).watchOrders(clienteId: session?.clienteId).map((orders) {
     for (final order in orders) {
-      if (order.estadoCuenta != 'CERRADA' && order.estadoCuenta != 'CERRADO') {
+      if (order.estadoCuenta != 'CERRADA' && 
+          order.estadoCuenta != 'CERRADO' &&
+          order.estadoCuenta != 'PAGADA' &&
+          order.estadoCuenta != 'PAGADO' &&
+          order.estadoCuenta != 'COMPLETADA' &&
+          order.estadoCuenta != 'COMPLETADO') {
         return order;
       }
     }
