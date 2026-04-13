@@ -1,18 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
 import 'app.dart';
-import 'data/database/app_database.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  debugPrint("Handling a background message: ${message.messageId}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // ---> ONE-TIME DATABASE WIPE <---
-  // Injected temporarily to delete all rows without schema drops.
-  // REMOVE THESE 3 LINES AFTER HOT RESTARTING ONCE
-  final db = AppDatabase();
-  await db.clearAllTables();
-  await db.close();
-  
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugPrint('Firebase not configured properly. Please run flutterfire configure: $e');
+  }
+
   runApp(
     const ProviderScope(
       child: NocturnalApp(),

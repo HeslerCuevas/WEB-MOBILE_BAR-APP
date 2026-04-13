@@ -76,17 +76,18 @@ class AppDatabase extends _$AppDatabase {
     // Intentionally empty. Products and Categories will be fetched from API.
   }
   /// Delete all rows from every table structurally without dropping schemas
-  Future<void> clearAllTables() async {
-    await customStatement('PRAGMA foreign_keys = OFF');
-    try {
-      await transaction(() async {
-        for (final table in allTables) {
-          await delete(table).go();
-        }
-      });
-    } finally {
-      await customStatement('PRAGMA foreign_keys = ON');
-    }
+Future<void> clearAllTables() async {
+  await customStatement('PRAGMA foreign_keys = OFF');
+  
+  try {
+    await transaction(() async {
+      for (final table in allTables) {
+        await delete(table).go();
+      }
+    });
+  } finally {
+    await customStatement('PRAGMA foreign_keys = ON');
+  }
   }
 }
 

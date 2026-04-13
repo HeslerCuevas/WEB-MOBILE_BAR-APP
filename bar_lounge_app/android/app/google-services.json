@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "776133621872",
+    "project_id": "my-app-bar-unique",
+    "storage_bucket": "my-app-bar-unique.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:776133621872:android:aef122818d21d76e435cb5",
+        "android_client_info": {
+          "package_name": "com.nocturnal.bar_lounge_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6hlx1IHC_Ws8ad94QSOTB7c20lOgFZdc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

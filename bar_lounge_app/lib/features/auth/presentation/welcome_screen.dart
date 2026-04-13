@@ -26,6 +26,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     try {
       final token = await ref.read(apiClientProvider).getToken();
       if (token != null && token.isNotEmpty) {
+        // Register FCM right after detecting persistent session
+        ref.read(apiServiceProvider).syncFCMToken();
         if (mounted) context.go('/menu');
         return;
       }

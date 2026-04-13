@@ -110,8 +110,6 @@ class _ReceiptBody extends ConsumerWidget {
               error: (e, __) => Center(child: Text('Error loading items: $e', style: TextStyle(color: AppColors.error))),
             ),
           ),
-          // ── Bottom action buttons ──
-          _buildActionButtons(context),
         ],
       ),
     );
@@ -386,98 +384,6 @@ class _ReceiptBody extends ConsumerWidget {
           style: GoogleFonts.manrope(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.onSurface),
         ),
       ],
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        border: Border(top: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.08))),
-      ),
-      child: Row(
-        children: [
-          // PDF button
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('PDF export coming soon!', style: GoogleFonts.manrope()),
-                    backgroundColor: AppColors.surfaceContainerHigh,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              },
-              child: Container(
-                height: 52,
-                decoration: BoxDecoration(
-                  gradient: AppColors.amberGlow,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: AppColors.ctaShadow,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.download_outlined, color: Colors.white, size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      'PDF',
-                      style: GoogleFonts.epilogue(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Share button
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Share receipt coming soon!', style: GoogleFonts.manrope()),
-                    backgroundColor: AppColors.surfaceContainerHigh,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              },
-              child: Container(
-                height: 52,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.share_outlined, color: AppColors.onSurface, size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      'SHARE',
-                      style: GoogleFonts.epilogue(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.onSurface,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

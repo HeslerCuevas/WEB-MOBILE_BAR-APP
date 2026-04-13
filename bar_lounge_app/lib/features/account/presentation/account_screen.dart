@@ -138,18 +138,10 @@ class AccountScreen extends ConsumerWidget {
                   ),
                 );
                 if (confirm == true && context.mounted) {
-                  final session = ref.read(activeSessionProvider).maybeWhen(
-                    data: (s) => s,
-                    orElse: () => null,
-                  );
+                  
                   // Clear cart so the next user starts fresh
                   await ref.read(carritoDaoProvider).clearCart();
-                  // Clear this user's local order history
-                  if (session?.clienteId != null) {
-                    await ref.read(historialDaoProvider).clearOrdersForClient(session!.clienteId!);
-                  }
-                  await ref.read(carritoDaoProvider).clearCart();
-                  await ref.read(historialDaoProvider).clearAllHistory();
+                  await ref.read(mesaDaoProvider).clearAllActiveMesas();
                   await ref.read(sesionDaoProvider).clearSessions();
                   await ref.read(apiClientProvider).clearToken();
                   if (context.mounted) context.go('/');

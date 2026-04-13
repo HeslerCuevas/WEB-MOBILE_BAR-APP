@@ -31,6 +31,15 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     final cartCount = ref.watch(cartItemCountProvider);
     final mesa = ref.watch(activeMesaProvider);
 
+    final activeOrderAsync = ref.watch(activeOrderProvider);
+    final activeOrder = activeOrderAsync.maybeWhen(
+      data: (order) => order,
+      orElse: () => null,
+    );
+    final isOrderLocked =
+        activeOrder?.estadoCuenta == 'POR_FACTURAR' ||
+        activeOrder?.estadoCuenta == 'PENDING_PAYMENT';
+
     final tableNum = mesa.when(
       data: (m) => m?.numeroMesa ?? 5,
       loading: () => 5,
@@ -113,7 +122,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
                       itemCount: items.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 14),
-                      itemBuilder: (_, i) => _productCard(items[i]),
+                      itemBuilder: (_, i) => _productCard(items[i], isOrderLocked),
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
@@ -184,7 +193,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     );
   }
 
-  Widget _productCard(ProductosCacheData p) {
+  Widget _productCard(ProductosCacheData p, bool isOrderLocked) {
     return Container(
       height: 130,
       decoration: BoxDecoration(
@@ -228,6 +237,43 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 // Add to cart button
                 _AnimatedAddButton(
                   onTap: () async {
+                    if (isOrderLocked) {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          backgroundColor: AppColors.surfaceContainerHigh,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          title: Text(
+                            'Ordering Locked',
+                            style: GoogleFonts.epilogue(
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.onSurface,
+                            ),
+                          ),
+                          content: Text(
+                            'You need to pay your order first.',
+                            style: GoogleFonts.manrope(
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              child: Text(
+                                'OK',
+                                style: GoogleFonts.epilogue(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                      return;
+                    }
                     try {
                       await ref.read(carritoDaoProvider).addItem(
                         productoId: p.id,

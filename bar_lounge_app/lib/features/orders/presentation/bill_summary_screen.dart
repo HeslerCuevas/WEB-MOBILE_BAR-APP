@@ -269,14 +269,23 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                                         isOrderLocked ||
                                         _paymentPending
                                     ? null
-                                    : () => _requestPayment(
-                                      activeOrder,
-                                      activeSession,
-                                      tableNum,
-                                    ),
+                                    : () {
+                                        if (items.isNotEmpty) {
+                                          _showDialog(
+                                            'Pending Items',
+                                            'There are unconfirmed items in your order. Please confirm or remove them before requesting payment.',
+                                          );
+                                          return;
+                                        }
+                                        _requestPayment(
+                                          activeOrder,
+                                          activeSession,
+                                          tableNum,
+                                        );
+                                      },
                             icon: const Icon(Icons.credit_score, size: 16),
                             label: Text(
-                              _paymentPending
+                              (_paymentPending || isOrderLocked)
                                   ? 'PAYMENT REQUESTED'
                                   : 'PAY & CLOSE ACCOUNT',
                               style: GoogleFonts.epilogue(
@@ -400,7 +409,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                             final sel = i == _tipIndex;
                             return Expanded(
                               child: GestureDetector(
-                                onTap: () => setState(() => _tipIndex = i),
+                                onTap: (_paymentPending || isOrderLocked) ? null : () => setState(() => _tipIndex = i),
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 150),
                                   margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
@@ -444,6 +453,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                         if (_tipPcts[_tipIndex] == -1) ...[
                           const SizedBox(height: 12),
                           TextField(
+                            enabled: !(_paymentPending || isOrderLocked),
                             controller: _customTipController,
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
@@ -555,7 +565,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        if (_paymentPending)
+                        if (_paymentPending || isOrderLocked)
                           Container(
                             width: double.infinity,
                             margin: const EdgeInsets.only(bottom: 20),
@@ -938,25 +948,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                     color: AppColors.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    _statusLabel(item.estadoPreparacion),
-                    style: GoogleFonts.manrope(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -974,16 +965,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
     );
   }
 
-  String _statusLabel(String raw) {
-    final normalized = raw.toUpperCase();
-    if (normalized.contains('ENTREG') || normalized.contains('DONE'))
-      return 'Delivered';
-    if (normalized.contains('PREPAR') ||
-        normalized.contains('COLA') ||
-        normalized.contains('PENDING'))
-      return 'In preparation';
-    return raw;
-  }
+
 
   Future<void> _confirmItems(
     List<CarritoLocalData> items,
@@ -1014,12 +996,9 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       (sum, item) => sum + item.montoImpuesto,
     );
     final propinaLegal = double.parse((subtotal * 0.10).toStringAsFixed(2));
-    final extraTip =
-        _tipPcts[_tipIndex] == -1
-            ? _customTipAmount
-            : subtotal * _tipPcts[_tipIndex] / 100;
+
     final totalGeneral = double.parse(
-      (subtotal + totalImpuestos + propinaLegal + extraTip).toStringAsFixed(2),
+      (subtotal + totalImpuestos + propinaLegal).toStringAsFixed(2),
     );
     final uuid = activeOrder?.facturaLocalUuid ?? _uuid.v4();
 
@@ -1044,7 +1023,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
           subtotal: subtotal,
           total_impuestos: totalImpuestos,
           propina_legal: propinaLegal,
-          propina_extra: extraTip,
+          propina_extra: 0.0,
           total_general: totalGeneral,
           detalles: detalles,
         );
@@ -1174,16 +1153,23 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
         SolicitarCuentaRequest(
           numero_mesa: numeroMesa,
           metodo_pago_preferido: 'EFECTIVO',
-          propina_voluntaria_extra: double.parse(extraTip.toStringAsFixed(2)),
+          propina_extra: double.parse(extraTip.toStringAsFixed(2)),
           requiere_comprobante_fiscal: false,
           rnc_comprobante: null,
         ),
       );
 
-      await historialDao.updateOrderStatus(
-        activeOrder.facturaLocalUuid,
-        'PENDING_PAYMENT',
-        propinaVoluntaria: double.parse(extraTip.toStringAsFixed(2)),
+      final remoteResumen = await api.getResumenCuenta(activeOrder.facturaLocalUuid);
+      await historialDao.syncExistingOrder(
+        clienteId: activeSession.clienteId!,
+        numeroMesa: numeroMesa,
+        facturaUuid: remoteResumen.factura_local_uuid,
+        subtotal: remoteResumen.subtotal_acumulado,
+        totalImpuestos: remoteResumen.total_impuestos_acumulado,
+        propinaLegal: remoteResumen.propina_legal_acumulada,
+        totalGeneral: remoteResumen.total_general_acumulado,
+        estadoCuenta: 'PENDING_PAYMENT', // Lock UI locally until FCM
+        items: remoteResumen.items_consumidos,
       );
       if (mounted) {
         _showDialog(

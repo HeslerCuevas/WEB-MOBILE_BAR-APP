@@ -391,14 +391,14 @@ class ResumenCuentaResponse {
 class SolicitarCuentaRequest {
   final int numero_mesa;
   final String metodo_pago_preferido;
-  final double propina_voluntaria_extra;
+  final double propina_extra;
   final bool requiere_comprobante_fiscal;
   final String? rnc_comprobante;
 
   SolicitarCuentaRequest({
     required this.numero_mesa,
     required this.metodo_pago_preferido,
-    required this.propina_voluntaria_extra,
+    required this.propina_extra,
     required this.requiere_comprobante_fiscal,
     this.rnc_comprobante,
   });
@@ -407,7 +407,7 @@ class SolicitarCuentaRequest {
         'numero_mesa': numero_mesa,
         'mesa': numero_mesa,
         'metodo_pago_preferido': metodo_pago_preferido,
-        'propina_voluntaria_extra': propina_voluntaria_extra,
+        'propina_extra': propina_extra,
         'requiere_comprobante_fiscal': requiere_comprobante_fiscal,
         'rnc_comprobante': rnc_comprobante,
       };

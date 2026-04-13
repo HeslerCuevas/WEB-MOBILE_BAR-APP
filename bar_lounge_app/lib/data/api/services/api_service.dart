@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import '../api_client.dart';
 import '../dto/api_models.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 /// API service for all endpoints from api_contract.md
 class ApiService {
@@ -25,7 +28,33 @@ class ApiService {
     final loginResponse = LoginResponse.fromJson(response.data);
     // Store token and cliente_id per contract instruction
     await _client.saveToken(loginResponse.access_token, clienteId: loginResponse.cliente_id);
+    
+    _registerFCMToken();
+    
     return loginResponse;
+  }
+
+  // Called to execute the device registration (e.g. after successful login)
+  Future<void> _registerFCMToken() async {
+    try {
+      String plataforma = Platform.isAndroid ? "Android" : "iOS"; // Detecta
+      final String? token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await _client.dio.post(
+          '/clientes/auth/registrar-dispositivo',
+          data: {'fcm_token': token,
+        'plataforma': plataforma,},
+        );
+        print('[FCM] Token successfully registered');
+      }
+    } catch (e) {
+      print('[FCM Error] Could not register token: $e');
+    }
+  }
+
+  // Public method to be called upon detecting persistent session at app launch
+  Future<void> syncFCMToken() async {
+    await _registerFCMToken();
   }
 
   // ── 3.1 Categories ──────────────────────────────────────

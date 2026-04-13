@@ -51,6 +51,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         password_plano: pass,
       ));
       final loginResponse = await api.login(LoginRequest(email: email, password_plano: pass));
+      
+      // Clean up any local ghost artifacts from an old user that might have had this same auto-increment ID
+      await ref.read(historialDaoProvider).clearOrdersForClient(loginResponse.cliente_id);
+      
       await ref.read(sesionDaoProvider).createAuthSession(
         token: loginResponse.access_token,
         nombre: loginResponse.nombre_completo,

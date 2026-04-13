@@ -130,8 +130,9 @@ class HistorialDao extends DatabaseAccessor<AppDatabase>
     required String estadoCuenta,
     required List<ItemConsumidoDto> items,
   }) async {
-    // Delete any existing conflicting active order for this client
-    await clearOrdersForClient(clienteId);
+    // Delete any existing sync for this specific order to avoid duplicate constraints
+    await (delete(historialPedidos)..where((o) => o.facturaLocalUuid.equals(facturaUuid))).go();
+    await (delete(historialDetalles)..where((d) => d.facturaLocalUuid.equals(facturaUuid))).go();
 
     // Insert the base order
     await into(historialPedidos).insert(

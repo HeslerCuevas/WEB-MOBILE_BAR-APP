@@ -49,4 +49,6 @@ class MesaDao extends DatabaseAccessor<AppDatabase> with _$MesaDaoMixin {
       const MesaActivaCompanion(estadoCuenta: Value('CERRADA')),
     );
   }
+
+  Future<void> clearAllActiveMesas() => delete(mesaActiva).go();
 }
