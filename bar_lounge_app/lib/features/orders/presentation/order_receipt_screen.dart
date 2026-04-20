@@ -7,16 +7,13 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/providers/providers.dart';
 import '../../../data/database/app_database.dart';
-
 class OrderReceiptScreen extends ConsumerWidget {
   final String facturaUuid;
   const OrderReceiptScreen({super.key, required this.facturaUuid});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ordersAsync = ref.watch(ordersProvider);
     final detailsAsync = ref.watch(orderDetailsProvider(facturaUuid));
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: ordersAsync.when(
@@ -39,23 +36,18 @@ class OrderReceiptScreen extends ConsumerWidget {
     );
   }
 }
-
 class _ReceiptBody extends ConsumerWidget {
   final HistorialPedido order;
   final AsyncValue<List<HistorialDetalle>> detailsAsync;
-
   const _ReceiptBody({required this.order, required this.detailsAsync});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dateLabel = DateFormat('MMM dd, yyyy').format(order.creadoEn).toUpperCase();
     final timeLabel = DateFormat('h:mm a').format(order.creadoEn);
-
     return SafeArea(
       bottom: false,
       child: Column(
         children: [
-          // ── Header ──
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
             child: Row(
@@ -89,7 +81,6 @@ class _ReceiptBody extends ConsumerWidget {
                     ),
                   ),
                 ),
-                // Avatar placeholder
                 Container(
                   width: 40,
                   height: 40,
@@ -102,7 +93,6 @@ class _ReceiptBody extends ConsumerWidget {
               ],
             ),
           ),
-          // ── Scrollable body ──
           Expanded(
             child: detailsAsync.when(
               data: (details) => _buildReceipt(context, details, timeLabel),
@@ -114,14 +104,12 @@ class _ReceiptBody extends ConsumerWidget {
       ),
     );
   }
-
   Widget _buildReceipt(BuildContext context, List<HistorialDetalle> details, String timeLabel) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Session info banner ──
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -170,7 +158,6 @@ class _ReceiptBody extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 24),
-          // ── Receipt card ──
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
@@ -180,7 +167,6 @@ class _ReceiptBody extends ConsumerWidget {
             ),
             child: Column(
               children: [
-                // Brand
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
                   child: Text(
@@ -193,9 +179,7 @@ class _ReceiptBody extends ConsumerWidget {
                     ),
                   ),
                 ),
-                // Divider
                 Divider(height: 1, color: AppColors.outlineVariant.withValues(alpha: 0.12)),
-                // Items
                 if (details.isEmpty)
                   Padding(
                     padding: const EdgeInsets.all(20),
@@ -206,14 +190,12 @@ class _ReceiptBody extends ConsumerWidget {
                   )
                 else
                   ...details.map((d) => _lineItem(d)),
-                // Divider
                 Divider(
                   height: 1,
                   color: AppColors.outlineVariant.withValues(alpha: 0.12),
                   indent: 20,
                   endIndent: 20,
                 ),
-                // Totals
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   child: Column(
@@ -230,7 +212,6 @@ class _ReceiptBody extends ConsumerWidget {
                     ],
                   ),
                 ),
-                // Total box
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Container(
@@ -264,7 +245,6 @@ class _ReceiptBody extends ConsumerWidget {
                     ),
                   ),
                 ),
-                // Status
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: Container(
@@ -313,11 +293,9 @@ class _ReceiptBody extends ConsumerWidget {
       ),
     );
   }
-
   double _computeTotal() {
     return order.subtotal + order.totalImpuestos + order.propinaLegal + order.propinaVoluntaria;
   }
-
   String _paymentStatusLabel() {
     switch (order.estadoCuenta) {
       case 'PENDING_PAYMENT':
@@ -334,14 +312,12 @@ class _ReceiptBody extends ConsumerWidget {
         return 'Session Open';
     }
   }
-
   Widget _lineItem(HistorialDetalle d) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Qty
           SizedBox(
             width: 28,
             child: Text(
@@ -354,7 +330,6 @@ class _ReceiptBody extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 6),
-          // Name
           Expanded(
             child: Text(
               d.productoNombre,
@@ -365,7 +340,6 @@ class _ReceiptBody extends ConsumerWidget {
               ),
             ),
           ),
-          // Price
           Text(
             '\$${d.subtotalLinea.toStringAsFixed(2)}',
             style: GoogleFonts.manrope(
@@ -378,7 +352,6 @@ class _ReceiptBody extends ConsumerWidget {
       ),
     );
   }
-
   Widget _totalRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

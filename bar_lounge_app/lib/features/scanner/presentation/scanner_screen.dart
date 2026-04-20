@@ -4,16 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/providers/providers.dart';
-
 import '../../../data/api/dto/api_models.dart';
-
-/// QR Scanner — pulsating frame + manual table entry, fully functional
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
   @override
   ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
 }
-
 class _ScannerScreenState extends ConsumerState<ScannerScreen>
     with SingleTickerProviderStateMixin {
   final _tableCtrl = TextEditingController();
@@ -21,7 +17,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
   late Animation<double> _anim;
   bool _loading = false;
   String? _error;
-
   @override
   void initState() {
     super.initState();
@@ -29,32 +24,24 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       ..repeat(reverse: true);
     _anim = Tween(begin: 0.3, end: 0.9).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
   }
-
   @override
   void dispose() {
     _tableCtrl.dispose();
     _pulse.dispose();
     super.dispose();
   }
-
   Future<void> _processTableLinked(int tableNum) async {
     final api = ref.read(apiServiceProvider);
     final session = await ref.read(sesionDaoProvider).getActiveSession();
-    
-    // Call the API
     final resp = await api.vincularMesa(VincularMesaRequest(
       codigo_qr_mesa: 'MESA-${tableNum.toString().padLeft(2, '0')}',
       numero_mesa: tableNum,
     ));
-
-    // Link locally
     await ref.read(mesaDaoProvider).linkTable(
       numeroMesa: tableNum, 
       codigoQr: 'MESA-${tableNum.toString().padLeft(2, '0')}',
       facturaUuid: resp.factura_local_uuid_activa,
     );
-
-    // Sync order if they have one and are a registered user
     if (resp.factura_local_uuid_activa != null && session?.clienteId != null) {
       try {
         final sum = await api.getResumenCuenta(resp.factura_local_uuid_activa!);
@@ -74,7 +61,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       }
     }
   }
-
   Future<void> _confirmTable() async {
     final raw = _tableCtrl.text.trim();
     final tableNum = int.tryParse(raw);
@@ -92,8 +78,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       if (mounted) setState(() => _loading = false);
     }
   }
-
-  /// Simulates a QR scan by using table 5 as default
   void _simulateScan() async {
     setState(() { _loading = true; _error = null; });
     await Future.delayed(const Duration(milliseconds: 800));
@@ -104,14 +88,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       if (mounted) setState(() { _loading = false; _error = 'Failed to scan.'; });
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(children: [
-          // ── Top Bar ──
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             child: Center(
@@ -123,7 +105,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(children: [
                 const SizedBox(height: 16),
-                // ── Scan Frame ──
                 AnimatedBuilder(
                   animation: _anim,
                   builder: (_, __) => GestureDetector(
@@ -155,7 +136,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                   ),
                 ),
                 const SizedBox(height: 32),
-                // ── Manual Entry ──
                 Text('── OR ENTER MANUALLY ──', style: GoogleFonts.manrope(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.onSurfaceVariant.withValues(alpha: 0.6))),
                 const SizedBox(height: 16),
                 if (_error != null) ...[
@@ -203,7 +183,6 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       ),
     );
   }
-
   Widget _corner(Alignment alignment) {
     final isTop = alignment == Alignment.topLeft || alignment == Alignment.topRight;
     final isLeft = alignment == Alignment.topLeft || alignment == Alignment.bottomLeft;

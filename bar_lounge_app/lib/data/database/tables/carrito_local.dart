@@ -1,7 +1,5 @@
 import 'package:drift/drift.dart';
 import 'productos_cache.dart';
-
-/// Tabla: Carrito local de pre-pedido
 class CarritoLocal extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get detalleLocalUuid => text()();

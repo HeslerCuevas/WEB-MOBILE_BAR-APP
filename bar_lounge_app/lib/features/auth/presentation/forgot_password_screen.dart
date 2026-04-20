@@ -4,20 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gradient_button.dart';
-
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
-
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailCtrl = TextEditingController();
   bool _loading = false;
-
   @override
   void dispose() { _emailCtrl.dispose(); super.dispose(); }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

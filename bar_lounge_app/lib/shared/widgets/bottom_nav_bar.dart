@@ -2,25 +2,20 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
-
-/// Bottom navigation bar matching the mockup design exactly
 class ScaffoldWithNavBar extends StatelessWidget {
   final Widget child;
   const ScaffoldWithNavBar({super.key, required this.child});
-
   static const _tabs = [
     _NavTab('/menu', Icons.local_bar, 'LOUNGE'),
     _NavTab('/scanner', Icons.qr_code_scanner, 'SCANNER'),
     _NavTab('/orders', Icons.receipt_long, 'ORDERS'),
     _NavTab('/account', Icons.person, 'ACCOUNT'),
   ];
-
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
     final currentIndex = _tabs.indexWhere((t) => location.startsWith(t.path));
     final activeIndex = currentIndex == -1 ? 0 : currentIndex;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: child,
@@ -71,7 +66,6 @@ class ScaffoldWithNavBar extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildNavItem(
     BuildContext context, {
     required _NavTab tab,
@@ -124,7 +118,6 @@ class ScaffoldWithNavBar extends StatelessWidget {
     );
   }
 }
-
 class _NavTab {
   final String path;
   final IconData icon;

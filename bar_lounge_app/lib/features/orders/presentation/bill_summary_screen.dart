@@ -9,29 +9,25 @@ import '../../../data/providers/providers.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/api/dto/api_models.dart';
 import '../../../shared/widgets/gradient_button.dart';
-
 class BillSummaryScreen extends ConsumerStatefulWidget {
   const BillSummaryScreen({super.key});
   @override
   ConsumerState<BillSummaryScreen> createState() => _BillSummaryScreenState();
 }
-
 class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
   final _uuid = const Uuid();
-  int _tipIndex = 1; // 10% default
+  int _tipIndex = 1; 
   final _tipPcts = [5, 10, 15, -1];
   final _customTipController = TextEditingController();
   double _customTipAmount = 0.0;
   bool _requestingWaiter = false;
   bool _confirming = false;
   bool _paymentPending = false;
-
   @override
   void dispose() {
     _customTipController.dispose();
     super.dispose();
   }
-
   void _showDialog(String title, String body, {bool isSuccess = false}) {
     showDialog(
       context: context,
@@ -115,7 +111,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
           ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     final cartItems = ref.watch(cartItemsProvider);
@@ -132,7 +127,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
             ? ref.watch(orderDetailsProvider(activeOrder.facturaLocalUuid))
             : const AsyncValue.data([]);
     final mesa = ref.watch(activeMesaProvider);
-
     final tableNum = mesa.when(
       data: (m) => m?.numeroMesa ?? 5,
       loading: () => 5,
@@ -141,20 +135,17 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
     final isOrderLocked =
         activeOrder?.estadoCuenta == 'POR_FACTURAR' ||
         activeOrder?.estadoCuenta == 'PENDING_PAYMENT';
-
     if (activeOrder == null && _paymentPending) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() => _paymentPending = false);
       });
     }
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            // ── Header ──
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
@@ -189,20 +180,16 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
             Expanded(
               child: cartItems.when(
                 data: (items) {
-                  // Calculate live totals
                   double currentRoundSubtotal = 0;
                   double currentRoundTaxes = 0;
                   for (final i in items) {
                     currentRoundSubtotal += i.subtotalLinea;
                     currentRoundTaxes += i.montoImpuesto;
                   }
-
                   final baseSubtotal = activeOrder?.subtotal ?? 0.0;
                   final baseTaxes = activeOrder?.totalImpuestos ?? 0.0;
-
                   final totalSubtotal = baseSubtotal + currentRoundSubtotal;
                   final totalTaxes = baseTaxes + currentRoundTaxes;
-
                   final legalTip = totalSubtotal * 0.10;
                   final extraTip =
                       _tipPcts[_tipIndex] == -1
@@ -210,13 +197,11 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                           : totalSubtotal * _tipPcts[_tipIndex] / 100;
                   final total =
                       totalSubtotal + totalTaxes + legalTip + extraTip;
-
                   return SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Total Banner ──
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(20),
@@ -265,7 +250,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // ── Pay Button ──
                         SizedBox(
                           width: double.infinity,
                           height: 48,
@@ -312,7 +296,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        // ── Request Waiter ──
                         SizedBox(
                           width: double.infinity,
                           height: 44,
@@ -389,7 +372,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        // ── Tip Section ──
                         Opacity(
                           opacity: (_paymentPending || isOrderLocked) ? 0.4 : 1.0,
                           child: IgnorePointer(
@@ -533,7 +515,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        // ── Bill Breakdown ──
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -604,8 +585,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                               ),
                             ),
                           ),
-
-                        // ── Cart Items / New Round ──
                         Row(
                           children: [
                             const Icon(
@@ -700,8 +679,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                           ),
                         ],
                         const SizedBox(height: 24),
-
-                        // ── Confirmed Order Section ──
                         Row(
                           children: [
                             const Icon(
@@ -808,7 +785,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       ),
     );
   }
-
   Widget _billRow(String label, String value, {bool bold = false}) => Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
@@ -830,7 +806,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       ),
     ],
   );
-
   Widget _cartItem(item, {bool removable = true}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -893,22 +868,49 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
               ),
               const SizedBox(height: 6),
               if (removable)
-                GestureDetector(
-                  onTap: () async {
-                    await ref.read(carritoDaoProvider).removeItem(item.id);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        if (item.cantidad > 1) {
+                          await ref.read(carritoDaoProvider).updateQuantity(item.id, item.cantidad - 1);
+                        } else {
+                          await ref.read(carritoDaoProvider).removeItem(item.id);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Icon(
+                          Icons.remove,
+                          color: AppColors.error,
+                          size: 16,
+                        ),
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.delete_outline,
-                      color: AppColors.error,
-                      size: 16,
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () async {
+                        await ref.read(carritoDaoProvider).removeItem(item.id);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline,
+                          color: AppColors.error,
+                          size: 16,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
             ],
           ),
@@ -916,7 +918,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       ),
     );
   }
-
   Widget _confirmedItem(HistorialDetalle item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -980,9 +981,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       ),
     );
   }
-
-
-
   Future<void> _confirmItems(
     List<CarritoLocalData> items,
     HistorialPedido? activeOrder,
@@ -997,12 +995,10 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       );
       return;
     }
-
     setState(() => _confirming = true);
     final api = ref.read(apiServiceProvider);
     final historialDao = ref.read(historialDaoProvider);
     final carritoDao = ref.read(carritoDaoProvider);
-
     final subtotal = items.fold<double>(
       0,
       (sum, item) => sum + item.subtotalLinea,
@@ -1012,12 +1008,10 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       (sum, item) => sum + item.montoImpuesto,
     );
     final propinaLegal = double.parse((subtotal * 0.10).toStringAsFixed(2));
-
     final totalGeneral = double.parse(
       (subtotal + totalImpuestos + propinaLegal).toStringAsFixed(2),
     );
     final uuid = activeOrder?.facturaLocalUuid ?? _uuid.v4();
-
     final detalles =
         items.map((item) {
           return DetallePedidoRequest(
@@ -1029,7 +1023,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
             subtotal_linea: item.subtotalLinea,
           );
         }).toList();
-
     try {
       if (activeOrder == null) {
         final request = CrearPedidoRequest(
@@ -1044,7 +1037,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
           detalles: detalles,
         );
         await api.crearPedido(request);
-
         await historialDao.createOrder(
           HistorialPedidosCompanion.insert(
             facturaLocalUuid: uuid,
@@ -1084,7 +1076,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
           activeOrder.facturaLocalUuid,
           request,
         );
-
         await historialDao.appendOrderDetails(
           activeOrder.facturaLocalUuid,
           items
@@ -1102,7 +1093,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
               )
               .toList(),
         );
-
         await historialDao.updateOrderTotals(
           facturaUuid: activeOrder.facturaLocalUuid,
           newSubtotal:
@@ -1124,7 +1114,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
               ),
         );
       }
-
       await carritoDao.clearCart();
       if (mounted) {
         _showDialog(
@@ -1141,7 +1130,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       if (mounted) setState(() => _confirming = false);
     }
   }
-
   Future<void> _requestPayment(
     HistorialPedido activeOrder,
     SesionClienteData? activeSession,
@@ -1154,7 +1142,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       );
       return;
     }
-
     setState(() => _paymentPending = true);
     final api = ref.read(apiServiceProvider);
     final historialDao = ref.read(historialDaoProvider);
@@ -1162,7 +1149,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
         _tipPcts[_tipIndex] == -1
             ? _customTipAmount
             : (_tipPcts[_tipIndex] / 100) * activeOrder.subtotal;
-
     try {
       await api.solicitarCuenta(
         activeOrder.facturaLocalUuid,
@@ -1174,7 +1160,6 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
           rnc_comprobante: null,
         ),
       );
-
       final remoteResumen = await api.getResumenCuenta(activeOrder.facturaLocalUuid);
       await historialDao.syncExistingOrder(
         clienteId: activeSession.clienteId!,
@@ -1184,7 +1169,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
         totalImpuestos: remoteResumen.total_impuestos_acumulado,
         propinaLegal: remoteResumen.propina_legal_acumulada,
         totalGeneral: remoteResumen.total_general_acumulado,
-        estadoCuenta: 'PENDING_PAYMENT', // Lock UI locally until FCM
+        estadoCuenta: 'PENDING_PAYMENT', 
         items: remoteResumen.items_consumidos,
       );
       if (mounted) {

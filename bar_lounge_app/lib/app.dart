@@ -6,29 +6,28 @@ import 'core/router/app_router.dart';
 import 'data/providers/providers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-
 class NocturnalApp extends ConsumerStatefulWidget {
   const NocturnalApp({super.key});
-
   @override
   ConsumerState<NocturnalApp> createState() => _NocturnalAppState();
 }
-
 class _NocturnalAppState extends ConsumerState<NocturnalApp> {
   @override
   void initState() {
     super.initState();
-    // Sync catalog from API on app launch (non-blocking, offline-safe)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(catalogSyncProvider).syncCatalog();
+      ref.read(catalogSyncProvider).startPeriodicSync();
     });
-
     _requestPermissions();
     _setupPaymentListener();
   }
 
+  @override
+  void dispose() {
+    ref.read(catalogSyncProvider).stopPeriodicSync();
+    super.dispose();
+  }
   void _requestPermissions() async {
     final messaging = FirebaseMessaging.instance;
     final settings = await messaging.requestPermission(
@@ -38,36 +37,26 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
     );
     debugPrint('[FCM] User granted permission: ${settings.authorizationStatus}');
   }
-
   void _setupPaymentListener() {
     try {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
         debugPrint('[FCM ON_MESSAGE] Received message data: ${message.data}');
-        
-        // Accept ORDER_PAID or dynamically any update containing factura_uuid
         final String? action = message.data['action'];
         final String? uuidRecibido = message.data['factura_uuid'];
-        
         if (uuidRecibido == null || uuidRecibido.isEmpty) {
           debugPrint('[FCM] No factura_uuid in message, ignoring.');
           return;
         }
-
         try {
-          // IMMEDIATE FEEDBACK for testing
           scaffoldMessengerKey.currentState?.showSnackBar(
             const SnackBar(content: Text('Sincronizando pago...'), duration: Duration(seconds: 1)),
           );
-
           final session = await ref.read(sesionDaoProvider).getActiveSession();
           final orderInDb = await ref.read(historialDaoProvider).getOrderByUuid(uuidRecibido);
           int? clienteId = session?.clienteId ?? orderInDb?.clienteId;
           int numeroMesa = orderInDb?.numeroMesa ?? 0;
-
           if (clienteId != null) {
-            // 1. Force the database to refresh the account from the backend API regardless of current state
             final sum = await ref.read(apiServiceProvider).getResumenCuenta(uuidRecibido);
-            
             await ref.read(historialDaoProvider).syncExistingOrder(
               clienteId: clienteId,
               numeroMesa: numeroMesa,
@@ -80,8 +69,6 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
               items: sum.items_consumidos,
             );
             debugPrint('[FCM] Order $uuidRecibido local database updated to state: ${sum.estado_cuenta}');
-
-            // If it's a payment confirmation, do the visual updates and reset the table
             final bool isPaymentSuccess = action == 'ORDER_PAID' || 
                                          sum.estado_cuenta == 'CERRADA' || 
                                          sum.estado_cuenta == 'CERRADO' ||
@@ -89,25 +76,17 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
                                          sum.estado_cuenta == 'PAGADO' ||
                                          sum.estado_cuenta == 'COMPLETADA' ||
                                          sum.estado_cuenta == 'COMPLETADO';
-
             if (isPaymentSuccess) {
               debugPrint('[FCM] Payment success detected for UUID: $uuidRecibido');
               final mesaData = await ref.read(mesaDaoProvider).getActiveMesa();
-              
-              // 1. Logic for data cleanup (specific to table)
               if (mesaData != null && mesaData.facturaLocalUuid == uuidRecibido) {
                 debugPrint('[FCM] Target table matched. Clearing active table and cart.');
                 await ref.read(mesaDaoProvider).clearAllActiveMesas();
                 await ref.read(carritoDaoProvider).clearCart();
               } else {
                 debugPrint('[FCM Warning] Table mismatch or no active table. ActiveTableUuid: ${mesaData?.facturaLocalUuid}, ReceivedUuid: $uuidRecibido');
-                // Even if table doesn't match exactly, if syncExistingOrder worked, history is updated.
               }
-
-              // 2. Visual reset and success message (global for the client)
               debugPrint('[FCM] Triggering UI reset and Success Popup...');
-              
-              // Navigate to scanner first
               try {
                 if (mounted) {
                   appRouter.go('/scanner');
@@ -115,8 +94,6 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
               } catch (e) {
                 debugPrint('[FCM Error] Navigation to /scanner failed: $e');
               }
-
-              // Show Dialog in next frame with Root Context
               Future.delayed(const Duration(milliseconds: 500), () {
                 final rootContext = appRouter.routerDelegate.navigatorKey.currentContext;
                 if (rootContext != null) {
@@ -124,7 +101,6 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
                   _showSuccessDialog(rootContext);
                 } else {
                   debugPrint('[FCM Error] Global context for dialog not found. Is appRouter initialized?');
-                  // Absolute fallback: use scaffold messenger
                   scaffoldMessengerKey.currentState?.showSnackBar(
                     const SnackBar(content: Text('¡Gracias por tu pago! (Error al mostrar diálogo)')),
                   );
@@ -136,17 +112,12 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
           debugPrint('[FCM Error] Failed to process message: $e');
         }
       });
-
-      // Also listen when app is opened from notification
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         debugPrint('[FCM ON_MESSAGE_OPEN_APP] User tapped notification');
-        // We could trigger the same logic here if needed
       });
     } catch (_) {
-       // Firebase isn't correctly configured yet, swallow gracefully.
     }
   }
-
   void _showSuccessDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -236,7 +207,6 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
@@ -247,7 +217,6 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
         systemNavigationBarIconBrightness: Brightness.light,
       ),
     );
-
     return MaterialApp.router(
       title: 'NOCTURNAL',
       debugShowCheckedModeBanner: false,

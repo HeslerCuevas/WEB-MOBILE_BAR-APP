@@ -6,13 +6,11 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gradient_button.dart';
 import '../../../data/providers/providers.dart';
 import '../../../data/api/dto/api_models.dart';
-
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
   @override
   ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
-
 class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -21,7 +19,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   bool _terms = false;
   bool _loading = false;
   String? _error;
-
   @override
   void dispose() {
     _nameCtrl.dispose();
@@ -29,7 +26,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _passCtrl.dispose();
     super.dispose();
   }
-
   Future<void> _signup() async {
     final name = _nameCtrl.text.trim();
     final email = _emailCtrl.text.trim();
@@ -51,10 +47,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         password_plano: pass,
       ));
       final loginResponse = await api.login(LoginRequest(email: email, password_plano: pass));
-      
-      // Clean up any local ghost artifacts from an old user that might have had this same auto-increment ID
       await ref.read(historialDaoProvider).clearOrdersForClient(loginResponse.cliente_id);
-      
       await ref.read(sesionDaoProvider).createAuthSession(
         token: loginResponse.access_token,
         nombre: loginResponse.nombre_completo,
@@ -67,7 +60,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (mounted) setState(() => _loading = false);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -191,6 +183,5 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       ),
     );
   }
-
   Widget _label(String t) => Text(t, style: GoogleFonts.manrope(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.onSurfaceVariant));
 }

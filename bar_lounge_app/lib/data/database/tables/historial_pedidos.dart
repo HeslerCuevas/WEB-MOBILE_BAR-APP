@@ -1,10 +1,8 @@
 import 'package:drift/drift.dart';
-
-/// Tabla: Historial de pedidos (facturas)
 class HistorialPedidos extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get facturaLocalUuid => text()();
-  IntColumn get clienteId => integer().nullable()(); // Owner of this order
+  IntColumn get clienteId => integer().nullable()(); 
   IntColumn get numeroMesa => integer()();
   RealColumn get subtotal => real()();
   RealColumn get totalImpuestos => real()();

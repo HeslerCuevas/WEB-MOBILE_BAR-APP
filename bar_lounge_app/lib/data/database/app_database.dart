@@ -3,7 +3,6 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-
 import 'tables/sesion_cliente.dart';
 import 'tables/categorias_cache.dart';
 import 'tables/productos_cache.dart';
@@ -15,9 +14,9 @@ import 'daos/sesion_dao.dart';
 import 'daos/catalogo_dao.dart';
 import 'daos/mesa_dao.dart';
 import 'daos/carrito_dao.dart';
+
 import 'daos/historial_dao.dart';
-import 'daos/reservations_dao.dart';
-import 'tables/table_reservations.dart';
+
 
 part 'app_database.g.dart';
 
@@ -30,7 +29,7 @@ part 'app_database.g.dart';
     CarritoLocal,
     HistorialPedidos,
     HistorialDetalles,
-    TableReservations,
+
   ],
   daos: [
     SesionDao,
@@ -38,7 +37,7 @@ part 'app_database.g.dart';
     MesaDao,
     CarritoDao,
     HistorialDao,
-    ReservationsDao,
+
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -46,7 +45,7 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 5;
-
+  
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
@@ -64,21 +63,19 @@ class AppDatabase extends _$AppDatabase {
         if (from < 4) {
           await m.addColumn(productosCache, productosCache.imagenUrl);
         }
-        if (from < 5) {
-          await m.createTable(tableReservations);
-        }
+
       },
     );
   }
 
-  /// Seed sample data on first launch
+
   Future<void> _seedData() async {
-    // Intentionally empty. Products and Categories will be fetched from API.
+
   }
-  /// Delete all rows from every table structurally without dropping schemas
+
 Future<void> clearAllTables() async {
   await customStatement('PRAGMA foreign_keys = OFF');
-  
+
   try {
     await transaction(() async {
       for (final table in allTables) {

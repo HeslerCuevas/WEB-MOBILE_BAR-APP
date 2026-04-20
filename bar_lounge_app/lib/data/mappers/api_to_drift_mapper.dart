@@ -2,11 +2,10 @@ import 'package:drift/drift.dart';
 import '../database/app_database.dart';
 import '../api/dto/api_models.dart';
 
-/// Maps API response DTOs to Drift companion objects for local persistence
+
 class ApiToDriftMapper {
   ApiToDriftMapper._();
 
-  // ── Categorías ──────────────────────────────────────────────
   static CategoriasCacheCompanion categoriaToCompanion(CategoriaDto dto) {
     return CategoriasCacheCompanion.insert(
       id: Value(dto.id),
@@ -21,7 +20,6 @@ class ApiToDriftMapper {
     return dtos.map(categoriaToCompanion).toList();
   }
 
-  // ── Productos ───────────────────────────────────────────────
   static ProductosCacheCompanion productoToCompanion(
     ProductoDto dto,
     int categoriaId,

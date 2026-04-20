@@ -6,30 +6,24 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/providers/providers.dart';
 import '../../../data/database/app_database.dart';
-
 class OrderHistoryScreen extends ConsumerStatefulWidget {
   const OrderHistoryScreen({super.key});
-
   @override
   ConsumerState<OrderHistoryScreen> createState() => _OrderHistoryScreenState();
 }
-
 class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   String _searchQuery = '';
   bool _showSearch = false;
   final _searchController = TextEditingController();
-
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     final ordersAsync = ref.watch(ordersProvider);
     final allDetailsAsync = ref.watch(allOrderDetailsProvider);
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -37,7 +31,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ──
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: Row(
@@ -47,7 +40,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                       if (context.canPop()) {
                         context.pop();
                       } else {
-                        // Safe fallback if hot-restarted on this screen
                         context.go('/account');
                       }
                     },
@@ -95,7 +87,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                 ],
               ),
             ),
-            // ── Search bar ──
             AnimatedSize(
               duration: const Duration(milliseconds: 200),
               child: _showSearch
@@ -121,7 +112,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                     )
                   : const SizedBox.shrink(),
             ),
-            // ── Title ──
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 4),
               child: Text(
@@ -144,7 +134,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                 ),
               ),
             ),
-            // ── List ──
             Expanded(
               child: ordersAsync.when(
                 data: (orders) {
@@ -153,20 +142,16 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                   }
                   return allDetailsAsync.when(
                     data: (allDetails) {
-                      // Group details by facturaLocalUuid for quick lookup
                       final detailsMap = <String, List<HistorialDetalle>>{};
                       for (final d in allDetails) {
                         detailsMap.putIfAbsent(d.facturaLocalUuid, () => []).add(d);
                       }
-
-                      // Filter by search query
                       final filtered = _searchQuery.isEmpty
                           ? orders
                           : orders.where((o) {
                               final details = detailsMap[o.facturaLocalUuid] ?? [];
                               return details.any((d) => d.productoNombre.toLowerCase().contains(_searchQuery));
                             }).toList();
-
                       if (filtered.isEmpty) {
                         return Center(
                           child: Text(
@@ -175,7 +160,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                           ),
                         );
                       }
-
                       return ListView.separated(
                         padding: const EdgeInsets.fromLTRB(20, 4, 20, 120),
                         itemCount: filtered.length,
@@ -200,7 +184,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
       ),
     );
   }
-
   Widget _emptyState() {
     return Center(
       child: Column(
@@ -219,7 +202,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
       ),
     );
   }
-
   Widget _orderCard(BuildContext context, HistorialPedido order, List<HistorialDetalle> details) {
     final date = DateFormat('MMM dd, yyyy').format(order.creadoEn);
     final isClosed = order.estadoCuenta == 'CERRADA' ||
@@ -231,8 +213,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
         order.estadoCuenta == 'PENDING_PAYMENT' ||
         order.estadoCuenta == 'WAITING_PAYMENT';
     final statusLabel = (order.estadoCuenta == 'PAGADA' || order.estadoCuenta == 'PAGADO' || order.estadoCuenta == 'CERRADA' || order.estadoCuenta == 'CERRADO') ? 'PAID' : isClosed ? 'CLOSED' : 'OPEN';
-
-    // Build item preview string
     String itemPreview = 'No items';
     if (details.isNotEmpty) {
       if (details.length == 1) {
@@ -244,7 +224,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
         itemPreview = '${details[0].productoNombre}, ${details[1].productoNombre}, and $extra other${extra > 1 ? 's' : ''}';
       }
     }
-
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
@@ -256,7 +235,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Date & Total ──
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -310,10 +288,8 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
               ],
             ),
             const SizedBox(height: 14),
-            // ── Item preview ──
             Row(
               children: [
-                // Product image thumbnails (up to 2 with +N overlay)
                 if (details.isNotEmpty) ...[
                   _thumbnailStack(details),
                   const SizedBox(width: 12),
@@ -333,7 +309,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
               ],
             ),
             const SizedBox(height: 14),
-            // ── View Receipt button ──
             GestureDetector(
               onTap: () => context.push('/order-receipt/${order.facturaLocalUuid}'),
               child: Container(
@@ -366,13 +341,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
       ),
     );
   }
-
   Widget _thumbnailStack(List<HistorialDetalle> details) {
-    // Show up to 2 icon thumbnails. No real product images in Drift, use icon placeholders.
     final count = details.length;
     final show = count.clamp(0, 2);
     final extra = count > 2 ? count - 2 : 0;
-
     return SizedBox(
       width: show == 2 ? 68 : 36,
       height: 36,

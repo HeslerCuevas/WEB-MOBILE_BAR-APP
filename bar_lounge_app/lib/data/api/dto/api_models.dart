@@ -1,11 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-// ══════════════════════════════════════════════════════════════
-// DTOs — strictly mapped to api_contract.md JSON schemas.
-// Key names use snake_case to match the API contract exactly.
-// ══════════════════════════════════════════════════════════════
-
-// ── 2.1 Registration ──────────────────────────────────────────────
 class RegistroRequest {
+
   final String nombre_completo;
   final String email;
   final String? telefono;
@@ -30,7 +24,7 @@ class RegistroResponse {
   final String mensaje;
   final int cliente_id;
   final String email;
-
+  
   RegistroResponse({
     required this.mensaje,
     required this.cliente_id,
@@ -45,7 +39,7 @@ class RegistroResponse {
       );
 }
 
-// ── 2.2 Login ─────────────────────────────────────────────────
+
 class LoginRequest {
   final String email;
   final String password_plano;
@@ -82,7 +76,7 @@ class LoginResponse {
       );
 }
 
-// ── 3.1 Categories ────────────────────────────────────────────
+
 class CategoriaDto {
   final int id;
   final String nombre;
@@ -104,7 +98,7 @@ class CategoriaDto {
       );
 }
 
-// ── 3.2 Products ─────────────────────────────────────────────
+
 class ProductoDto {
   final int id;
   final String sku;
@@ -126,6 +120,7 @@ class ProductoDto {
     required this.imagen_url,
   });
 
+
   factory ProductoDto.fromJson(Map<String, dynamic> json) => ProductoDto(
         id: json['id'] as int,
         sku: json['sku'] as String? ?? '',
@@ -138,7 +133,7 @@ class ProductoDto {
       );
 }
 
-// ── 4.1 Link Table ─────────────────────────────────────────
+
 class VincularMesaRequest {
   final String codigo_qr_mesa;
   final int numero_mesa;
@@ -177,8 +172,9 @@ class VincularMesaResponse {
       );
 }
 
-// ── 5.1 Create Order ──────────────────────────────────────────
+
 class DetallePedidoRequest {
+
   final String detalle_local_uuid;
   final int producto_id;
   final int cantidad;
@@ -215,6 +211,7 @@ class CrearPedidoRequest {
   final double propina_extra;
   final double total_general;
   final String? comentarios_cocina;
+
   final List<DetallePedidoRequest> detalles;
 
   CrearPedidoRequest({
@@ -268,7 +265,7 @@ class CrearPedidoResponse {
       );
 }
 
-// ── 5.2 Add to Order ──────────────────────────────────────
+
 class AgregarPedidoRequest {
   final int cliente_id;
   final int numero_mesa;
@@ -327,7 +324,7 @@ class AgregarPedidoResponse {
       );
 }
 
-// ── 5.3 Bill Summary ─────────────────────────────────────
+
 class ItemConsumidoDto {
   final String producto_nombre;
   final int cantidad;
@@ -387,7 +384,7 @@ class ResumenCuentaResponse {
       );
 }
 
-// ── 6.1 Request Bill ──────────────────────────────────────
+
 class SolicitarCuentaRequest {
   final int numero_mesa;
   final String metodo_pago_preferido;
@@ -413,7 +410,7 @@ class SolicitarCuentaRequest {
       };
 }
 
-// ── 6.2 Call Waiter ─────────────────────────────────────────
+
 class LlamarMeseroRequest {
   final String motivo_llamada;
 
@@ -428,7 +425,7 @@ class MensajeResponse {
   final String mensaje;
 
   MensajeResponse({required this.mensaje});
-
+  
   factory MensajeResponse.fromJson(Map<String, dynamic> json) =>
       MensajeResponse(mensaje: json['mensaje'] as String);
 }

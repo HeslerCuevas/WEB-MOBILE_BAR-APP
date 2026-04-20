@@ -8,34 +8,29 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gradient_button.dart';
 import '../../../data/providers/providers.dart';
 import '../../../data/api/dto/api_models.dart';
-
 class LoginScreen extends ConsumerStatefulWidget {
   final String? errorMessage;
   const LoginScreen({super.key, this.errorMessage});
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
-
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
   String? _error;
-
   @override
   void initState() {
     super.initState();
     _error = widget.errorMessage;
   }
-
   @override
   void dispose() {
     _emailCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
   }
-
   Future<void> _login() async {
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text.trim();
@@ -60,7 +55,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         setState(() => _error = 'Email or password is incorrect.');
         return;
       }
-      // Offline / API unavailable: continue with local demo session if possible.
       try {
         await ref.read(sesionDaoProvider).createAuthSession(
           token: 'offline_token',
@@ -77,7 +71,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) setState(() => _loading = false);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -181,6 +174,5 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
     );
   }
-
   Widget _label(String t) => Text(t, style: GoogleFonts.manrope(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.onSurfaceVariant));
 }

@@ -3,19 +3,19 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/router/app_router.dart';
 
-/// Dio client configured per Section 1 of api_contract.md
+
 class ApiClient {
   static const String _tokenKey = 'access_token';
   static const String _clientIdKey = 'cliente_id';
 
-  /// On Android emulator, `localhost` refers to the emulator itself.
-  /// Use 10.0.2.2 to reach the host machine's localhost:8001.
+
   static String get _baseUrl {
     if (Platform.isAndroid) {
       return 'http://10.0.2.2:8001/api/v1';
     }
     return 'http://localhost:8001/api/v1';
   }
+
 
   final Dio dio;
   final FlutterSecureStorage _storage;
@@ -33,12 +33,13 @@ class ApiClient {
       },
     );
 
-    // ── Auth interceptor FIRST so the token is in the header before logging ──
+
     this.dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+
           final path = options.path;
-          // Skip auth header for registration and login endpoints
+
           final isAuthEndpoint = path.contains('/auth/registro') ||
               path.contains('/auth/login');
 
@@ -63,7 +64,7 @@ class ApiClient {
           if (statusCode == 401) {
             final storedToken = await _storage.read(key: _tokenKey);
             if (storedToken == null || storedToken.isEmpty) {
-              // Token is truly gone – force re-login.
+
               await _storage.delete(key: _clientIdKey);
               try {
                 appRouter.go('/login', extra: 'Your session has expired, please log in again');
@@ -79,7 +80,7 @@ class ApiClient {
       ),
     );
 
-    // ── Logger AFTER auth so the Authorization header shows in logs ──
+
     this.dio.interceptors.add(
       LogInterceptor(
         requestBody: true,
@@ -100,7 +101,7 @@ class ApiClient {
   Future<String?> getToken() async {
     return _storage.read(key: _tokenKey);
   }
-
+  
   Future<int?> getClienteId() async {
     final val = await _storage.read(key: _clientIdKey);
     return val != null ? int.tryParse(val) : null;

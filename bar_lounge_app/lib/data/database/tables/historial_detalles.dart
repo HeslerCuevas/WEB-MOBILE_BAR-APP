@@ -1,6 +1,4 @@
 import 'package:drift/drift.dart';
-
-/// Tabla: Detalles de línea del pedido
 class HistorialDetalles extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get detalleLocalUuid => text()();

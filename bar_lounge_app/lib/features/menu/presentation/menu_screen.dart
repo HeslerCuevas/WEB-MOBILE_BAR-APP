@@ -6,31 +6,26 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/providers/providers.dart';
 import '../../../data/database/app_database.dart';
-
 class MenuScreen extends ConsumerStatefulWidget {
   const MenuScreen({super.key});
   @override
   ConsumerState<MenuScreen> createState() => _MenuScreenState();
 }
-
 class _MenuScreenState extends ConsumerState<MenuScreen> {
-  int _selectedCat = -1; // -1 = all
+  int _selectedCat = -1; 
   String _snack = '';
-
   void _showSnack(String msg) {
     setState(() => _snack = msg);
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _snack = '');
     });
   }
-
   @override
   Widget build(BuildContext context) {
     final categorias = ref.watch(categoriasProvider);
     final productos = ref.watch(allProductosProvider);
     final cartCount = ref.watch(cartItemCountProvider);
     final mesa = ref.watch(activeMesaProvider);
-
     final activeOrderAsync = ref.watch(activeOrderProvider);
     final activeOrder = activeOrderAsync.maybeWhen(
       data: (order) => order,
@@ -39,13 +34,11 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     final isOrderLocked =
         activeOrder?.estadoCuenta == 'POR_FACTURAR' ||
         activeOrder?.estadoCuenta == 'PENDING_PAYMENT';
-
     final tableNum = mesa.when(
       data: (m) => m?.numeroMesa ?? 5,
       loading: () => 5,
       error: (_, __) => 5,
     );
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -53,7 +46,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           SafeArea(
             bottom: false,
             child: Column(children: [
-              // ── AppBar ──
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: Row(children: [
@@ -67,7 +59,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       Text('NOCTURNAL', style: GoogleFonts.epilogue(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1)),
                     ]),
                   ),
-                  // Cart icon with badge
                   GestureDetector(
                     onTap: () => context.go('/orders'),
                     child: Stack(children: [
@@ -89,7 +80,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                   ),
                 ]),
               ),
-              // ── Category chips ──
               categorias.when(
                 data: (cats) {
                   return SizedBox(
@@ -108,7 +98,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 error: (_, __) => const SizedBox(height: 50),
               ),
               const SizedBox(height: 8),
-              // ── Products ──
               Expanded(
                 child: productos.when(
                   data: (all) {
@@ -131,7 +120,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               ),
             ]),
           ),
-          // ── Snack toast ──
           if (_snack.isNotEmpty)
             Positioned(
               bottom: 100,
@@ -154,7 +142,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
       ),
     );
   }
-
   Widget _catChip(String name, int id) {
     final selected = _selectedCat == id;
     return GestureDetector(
@@ -192,7 +179,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
       ),
     );
   }
-
   Widget _productCard(ProductosCacheData p, bool isOrderLocked) {
     return Container(
       height: 130,
@@ -202,7 +188,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 10)],
       ),
       child: Row(children: [
-        // Image
         ClipRRect(
           borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
           child: SizedBox(
@@ -219,7 +204,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
             ),
           ),
         ),
-        // Info
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(14),
@@ -234,7 +218,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 Text('\$${p.precioBase.toStringAsFixed(0)}',
                     style: GoogleFonts.epilogue(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.secondary)),
-                // Add to cart button
                 _AnimatedAddButton(
                   onTap: () async {
                     if (isOrderLocked) {
@@ -295,18 +278,14 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     );
   }
 }
-
 class _AnimatedAddButton extends StatefulWidget {
   final VoidCallback onTap;
   const _AnimatedAddButton({required this.onTap});
-
   @override
   State<_AnimatedAddButton> createState() => _AnimatedAddButtonState();
 }
-
 class _AnimatedAddButtonState extends State<_AnimatedAddButton> {
   bool _isPressed = false;
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

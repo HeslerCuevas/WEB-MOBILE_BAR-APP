@@ -4,11 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gradient_button.dart';
-
-/// Reset Link Sent screen — reset_link_sent mockup
 class ResetLinkSentScreen extends StatelessWidget {
   const ResetLinkSentScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,7 +30,6 @@ class ResetLinkSentScreen extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // Decorative blur
           Positioned(
             top: 0,
             left: 0,
@@ -54,7 +50,6 @@ class ResetLinkSentScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  // Glass card
                   ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: BackdropFilter(
@@ -76,7 +71,6 @@ class ResetLinkSentScreen extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            // Email icon in circle
                             Container(
                               width: 80,
                               height: 80,
@@ -158,7 +152,6 @@ class ResetLinkSentScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 28),
-                            // Divider
                             Container(
                               height: 1,
                               color: AppColors.outlineVariant.withValues(alpha: 0.1),
@@ -193,7 +186,6 @@ class ResetLinkSentScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  // Bottom badges
                   Row(
                     children: [
                       Expanded(

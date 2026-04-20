@@ -1,6 +1,4 @@
 import 'package:drift/drift.dart';
-
-/// Tabla: Sesión del cliente (invitado o autenticado)
 class SesionCliente extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get sessionToken => text().nullable()();

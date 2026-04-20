@@ -4,10 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/providers/providers.dart';
-
 class AccountScreen extends ConsumerWidget {
   const AccountScreen({super.key});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(activeSessionProvider);
@@ -21,7 +19,6 @@ class AccountScreen extends ConsumerWidget {
       loading: () => true,
       error: (_, __) => true,
     );
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -30,7 +27,6 @@ class AccountScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
           child: Column(children: [
             const SizedBox(height: 16),
-            // ── Avatar ──
             Stack(alignment: Alignment.center, children: [
               Container(
                 width: 110, height: 110,
@@ -48,7 +44,6 @@ class AccountScreen extends ConsumerWidget {
             const SizedBox(height: 14),
             Text(displayName, style: GoogleFonts.epilogue(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.onSurface)),
             const SizedBox(height: 28),
-            // If guest, show login prompt
             if (isGuest) ...[
               Container(
                 width: double.infinity,
@@ -89,28 +84,73 @@ class AccountScreen extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: 16),
-            // ── Quick Actions Grid ──
             Text('Quick Actions', style: GoogleFonts.epilogue(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.onSurfaceVariant.withValues(alpha: 0.8))),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: AspectRatio(
-                    aspectRatio: 1.3,
-                    child: _quickAction(context, Icons.receipt_long, 'Order\nHistory', onTap: () => context.push('/order-history')),
+            GestureDetector(
+              onTap: () => context.push('/order-history'),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primaryContainer.withValues(alpha: 0.7),
+                      AppColors.primaryContainer.withValues(alpha: 0.1),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.2),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: AspectRatio(
-                    aspectRatio: 1.3,
-                    child: _quickAction(context, Icons.event_seat, 'Table\nReservations', onTap: () => context.push('/reservations')),
-                  ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.receipt_long, color: AppColors.primary, size: 28),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Order History',
+                            style: GoogleFonts.epilogue(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.onSurface,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'View your previous rounds and bills',
+                            style: GoogleFonts.manrope(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: AppColors.primary.withValues(alpha: 0.8),
+                      size: 16,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
             const SizedBox(height: 28),
-            // ── Settings ──
             Text('Settings', style: GoogleFonts.epilogue(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.onSurfaceVariant.withValues(alpha: 0.8))),
             const SizedBox(height: 14),
             _settingItem(Icons.notifications_outlined, 'Notification Settings', onTap: () {}),
@@ -119,7 +159,6 @@ class AccountScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             _settingItem(Icons.help_outline, 'Help & Support', onTap: () {}),
             const SizedBox(height: 8),
-            // ── Logout ──
             GestureDetector(
               onTap: () async {
                 final confirm = await showDialog<bool>(
@@ -138,8 +177,6 @@ class AccountScreen extends ConsumerWidget {
                   ),
                 );
                 if (confirm == true && context.mounted) {
-                  
-                  // Clear cart so the next user starts fresh
                   await ref.read(carritoDaoProvider).clearCart();
                   await ref.read(mesaDaoProvider).clearAllActiveMesas();
                   await ref.read(sesionDaoProvider).clearSessions();
@@ -168,7 +205,6 @@ class AccountScreen extends ConsumerWidget {
       ),
     );
   }
-
   Widget _quickAction(BuildContext context, IconData icon, String label, {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap ?? () {
@@ -192,7 +228,6 @@ class AccountScreen extends ConsumerWidget {
       ),
     );
   }
-
   Widget _settingItem(IconData icon, String label, {required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,

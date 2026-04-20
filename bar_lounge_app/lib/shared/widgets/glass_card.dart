@@ -1,15 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
-
-/// Reusable glassmorphism container matching the design system
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final double borderRadius;
   final Color? backgroundColor;
   final double blurAmount;
-
   const GlassCard({
     super.key,
     required this.child,
@@ -18,7 +15,6 @@ class GlassCard extends StatelessWidget {
     this.backgroundColor,
     this.blurAmount = 20,
   });
-
   @override
   Widget build(BuildContext context) {
     return ClipRRect(

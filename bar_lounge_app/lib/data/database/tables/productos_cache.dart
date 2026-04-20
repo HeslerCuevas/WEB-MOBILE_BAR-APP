@@ -1,7 +1,5 @@
 import 'package:drift/drift.dart';
 import 'categorias_cache.dart';
-
-/// Tabla: Caché offline de productos del menú
 class ProductosCache extends Table {
   IntColumn get id => integer()();
   TextColumn get sku => text().nullable()();
@@ -13,7 +11,6 @@ class ProductosCache extends Table {
   TextColumn get imagenUrl => text().nullable()();
   IntColumn get categoriaId => integer().references(CategoriasCache, #id)();
   DateTimeColumn get sincronizadoEn => dateTime().withDefault(currentDateAndTime)();
-
   @override
   Set<Column> get primaryKey => {id};
 }

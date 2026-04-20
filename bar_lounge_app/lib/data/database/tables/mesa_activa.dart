@@ -1,6 +1,4 @@
 import 'package:drift/drift.dart';
-
-/// Tabla: Mesa activa vinculada por QR o entrada manual
 class MesaActiva extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get numeroMesa => integer()();

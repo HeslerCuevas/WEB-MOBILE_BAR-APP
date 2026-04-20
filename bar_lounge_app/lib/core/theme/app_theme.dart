@@ -18,7 +18,6 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.background,
 
-      // ── Color Scheme ─────────────────────────────────────
       colorScheme: const ColorScheme.dark(
         surface: AppColors.surface,
         primary: AppColors.primary,
@@ -54,9 +53,9 @@ class AppTheme {
         surfaceDim: AppColors.surfaceDim,
       ),
 
-      // ── Typography ───────────────────────────────────────
+
       textTheme: TextTheme(
-        // Display — Epilogue Black
+
         displayLarge: epilogue.displayLarge!.copyWith(
           fontWeight: FontWeight.w900,
           color: AppColors.onSurface,
@@ -71,7 +70,7 @@ class AppTheme {
           fontWeight: FontWeight.w900,
           color: AppColors.onSurface,
         ),
-        // Headlines — Epilogue Bold/ExtraBold
+
         headlineLarge: epilogue.headlineLarge!.copyWith(
           fontWeight: FontWeight.w800,
           color: AppColors.onSurface,
@@ -85,7 +84,6 @@ class AppTheme {
           fontWeight: FontWeight.w700,
           color: AppColors.onSurface,
         ),
-        // Titles — Epilogue
         titleLarge: epilogue.titleLarge!.copyWith(
           fontWeight: FontWeight.w700,
           color: AppColors.onSurface,
@@ -98,7 +96,6 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           color: AppColors.onSurface,
         ),
-        // Body — Manrope
         bodyLarge: manrope.bodyLarge!.copyWith(
           color: AppColors.onSurface,
         ),
@@ -108,7 +105,6 @@ class AppTheme {
         bodySmall: manrope.bodySmall!.copyWith(
           color: AppColors.onSurfaceVariant,
         ),
-        // Labels — Manrope
         labelLarge: manrope.labelLarge!.copyWith(
           fontWeight: FontWeight.w700,
           color: AppColors.onSurface,
@@ -126,7 +122,6 @@ class AppTheme {
         ),
       ),
 
-      // ── Input Decoration ─────────────────────────────────
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceContainerLowest,
@@ -162,7 +157,6 @@ class AppTheme {
         ),
       ),
 
-      // ── Card ─────────────────────────────────────────────
       cardTheme: CardThemeData(
         color: AppColors.surfaceContainerLow,
         elevation: 0,
@@ -171,7 +165,6 @@ class AppTheme {
         ),
       ),
 
-      // ── App Bar ──────────────────────────────────────────
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -186,8 +179,7 @@ class AppTheme {
           color: AppColors.primary,
         ),
       ),
-
-      // ── Bottom Nav ───────────────────────────────────────
+      
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.transparent,
         elevation: 0,

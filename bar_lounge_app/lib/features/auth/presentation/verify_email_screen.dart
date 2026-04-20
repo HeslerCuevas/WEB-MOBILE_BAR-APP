@@ -5,25 +5,21 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gradient_button.dart';
 import '../../../data/providers/providers.dart';
-
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   const VerifyEmailScreen({super.key});
   @override
   ConsumerState<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
 }
-
 class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   final List<TextEditingController> _ctrls = List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _nodes = List.generate(6, (_) => FocusNode());
   bool _loading = false;
-
   @override
   void dispose() {
     for (final c in _ctrls) { c.dispose(); }
     for (final n in _nodes) { n.dispose(); }
     super.dispose();
   }
-
   Future<void> _verify() async {
     final code = _ctrls.map((c) => c.text).join();
     if (code.length < 6) {
@@ -34,7 +30,6 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     }
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 800));
-    // Create auth session and go to scanner
     try {
       await ref.read(sesionDaoProvider).createAuthSession(
         token: 'verified_token',
@@ -45,7 +40,6 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     setState(() => _loading = false);
     if (mounted) context.go('/scanner');
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,7 +70,6 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
           Text("We've sent a 6-digit access code to your inbox.", textAlign: TextAlign.center,
               style: GoogleFonts.manrope(fontSize: 14, color: AppColors.onSurfaceVariant, height: 1.5)),
           const SizedBox(height: 32),
-          // ── OTP Fields ──
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(6, (i) => SizedBox(

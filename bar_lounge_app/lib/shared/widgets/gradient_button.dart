@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
-
-/// Amber-glow gradient CTA button matching the design system
 class GradientButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -9,7 +7,6 @@ class GradientButton extends StatelessWidget {
   final double height;
   final double borderRadius;
   final Gradient? gradient;
-
   const GradientButton({
     super.key,
     required this.text,
@@ -19,11 +16,9 @@ class GradientButton extends StatelessWidget {
     this.borderRadius = 12,
     this.gradient,
   });
-
   @override
   Widget build(BuildContext context) {
     final bool isDisabled = onPressed == null;
-
     return Container(
       width: double.infinity,
       height: height,

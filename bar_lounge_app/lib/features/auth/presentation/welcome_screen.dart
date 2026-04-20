@@ -5,28 +5,22 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gradient_button.dart';
 import '../../../data/providers/providers.dart';
-
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
-
   @override
   ConsumerState<WelcomeScreen> createState() => _WelcomeScreenState();
 }
-
 class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
     _checkToken();
   }
-
   Future<void> _checkToken() async {
     try {
       final token = await ref.read(apiClientProvider).getToken();
       if (token != null && token.isNotEmpty) {
-        // Register FCM right after detecting persistent session
         ref.read(apiServiceProvider).syncFCMToken();
         if (mounted) context.go('/menu');
         return;
@@ -38,20 +32,17 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background image
           Image.network(
             'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80',
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Container(color: AppColors.background),
           ),
-          // Gradient overlay
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -101,7 +92,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                       ),
                     )
                   else ...[
-                    // ── LOGIN ──
                     GradientButton(
                       text: 'LOGIN',
                       icon: Icons.login,
@@ -109,7 +99,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                       onPressed: () => context.push('/login'),
                     ),
                     const SizedBox(height: 12),
-                    // ── CREATE ACCOUNT ──
                     SizedBox(
                       width: double.infinity, height: 60,
                       child: ElevatedButton.icon(
@@ -125,7 +114,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // ── GUEST ──
                     TextButton(
                       onPressed: () async {
                         try {
