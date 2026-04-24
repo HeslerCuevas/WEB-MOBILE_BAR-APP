@@ -57,6 +57,17 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
           int numeroMesa = orderInDb?.numeroMesa ?? 0;
           if (clienteId != null) {
             final sum = await ref.read(apiServiceProvider).getResumenCuenta(uuidRecibido);
+            
+            final bool isPaymentSuccess = action == 'ORDER_PAID' || 
+                                         sum.estado_cuenta == 'CERRADA' || 
+                                         sum.estado_cuenta == 'CERRADO' ||
+                                         sum.estado_cuenta == 'PAGADA' ||
+                                         sum.estado_cuenta == 'PAGADO' ||
+                                         sum.estado_cuenta == 'COMPLETADA' ||
+                                         sum.estado_cuenta == 'COMPLETADO';
+
+            final finalEstado = isPaymentSuccess ? 'PAGADA' : sum.estado_cuenta;
+
             await ref.read(historialDaoProvider).syncExistingOrder(
               clienteId: clienteId,
               numeroMesa: numeroMesa,
@@ -65,27 +76,25 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
               totalImpuestos: sum.total_impuestos_acumulado,
               propinaLegal: sum.propina_legal_acumulada,
               totalGeneral: sum.total_general_acumulado,
-              estadoCuenta: sum.estado_cuenta,
+              estadoCuenta: finalEstado,
               items: sum.items_consumidos,
+              propinaVoluntaria: orderInDb?.propinaVoluntaria ?? 0.0,
             );
-            debugPrint('[FCM] Order $uuidRecibido local database updated to state: ${sum.estado_cuenta}');
-            final bool isPaymentSuccess = action == 'ORDER_PAID' || 
-                                         sum.estado_cuenta == 'CERRADA' || 
-                                         sum.estado_cuenta == 'CERRADO' ||
-                                         sum.estado_cuenta == 'PAGADA' ||
-                                         sum.estado_cuenta == 'PAGADO' ||
-                                         sum.estado_cuenta == 'COMPLETADA' ||
-                                         sum.estado_cuenta == 'COMPLETADO';
+            debugPrint('[FCM] Order $uuidRecibido local database updated to state: $finalEstado');
             if (isPaymentSuccess) {
-              debugPrint('[FCM] Payment success detected for UUID: $uuidRecibido');
-              final mesaData = await ref.read(mesaDaoProvider).getActiveMesa();
-              if (mesaData != null && mesaData.facturaLocalUuid == uuidRecibido) {
-                debugPrint('[FCM] Target table matched. Clearing active table and cart.');
-                await ref.read(mesaDaoProvider).clearAllActiveMesas();
-                await ref.read(carritoDaoProvider).clearCart();
-              } else {
-                debugPrint('[FCM Warning] Table mismatch or no active table. ActiveTableUuid: ${mesaData?.facturaLocalUuid}, ReceivedUuid: $uuidRecibido');
+              debugPrint('[FCM] Payment success detected for UUID: $uuidRecibido. Cleaning up all user ghost sessions.');
+              
+              final activeHistory = await ref.read(historialDaoProvider).watchOrders(clienteId: clienteId).first;
+              for (final o in activeHistory) {
+                if (o.estadoCuenta != 'CERRADA' && o.estadoCuenta != 'PAGADA' && o.estadoCuenta != 'CERRADO' && o.estadoCuenta != 'PAGADO' && o.estadoCuenta != 'COMPLETADA' && o.estadoCuenta != 'COMPLETADO') {
+                  await ref.read(historialDaoProvider).updateOrderStatus(o.facturaLocalUuid, 'PAGADA');
+                  debugPrint('[FCM Warning] Ghost order found and closed safely: ${o.facturaLocalUuid}');
+                }
               }
+
+              await ref.read(mesaDaoProvider).clearAllActiveMesas();
+              await ref.read(carritoDaoProvider).clearCart();
+              debugPrint('[FCM] Cleared all active tables and cart after payment success.');
               debugPrint('[FCM] Triggering UI reset and Success Popup...');
               try {
                 if (mounted) {

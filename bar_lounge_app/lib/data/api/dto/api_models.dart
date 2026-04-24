@@ -173,8 +173,246 @@ class VincularMesaResponse {
 }
 
 
-class DetallePedidoRequest {
+class DetallePedidoCreate {
+  final int producto_id;
+  final int cantidad;
+  final double precio_unitario;
+  final double monto_impuesto;
+  final double subtotal_linea;
+  final String? detalle_local_uuid;
 
+  DetallePedidoCreate({
+    required this.producto_id,
+    required this.cantidad,
+    required this.precio_unitario,
+    required this.monto_impuesto,
+    required this.subtotal_linea,
+    this.detalle_local_uuid,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'producto_id': producto_id,
+        'cantidad': cantidad,
+        'precio_unitario': precio_unitario,
+        'monto_impuesto': monto_impuesto,
+        'subtotal_linea': subtotal_linea,
+        if (detalle_local_uuid != null) 'detalle_local_uuid': detalle_local_uuid,
+      };
+}
+
+class PedidoCreateRequest {
+  final int? empleado_id;
+  final int? cliente_id;
+  final String canal_origen;
+  final int? mesa;
+  final double subtotal;
+  final double total_impuestos;
+  final double total_general;
+  final double propina_extra;
+  final String? factura_local_uuid;
+  final List<DetallePedidoCreate> detalles;
+
+  PedidoCreateRequest({
+    this.empleado_id,
+    this.cliente_id,
+    required this.canal_origen,
+    this.mesa,
+    required this.subtotal,
+    required this.total_impuestos,
+    required this.total_general,
+    this.propina_extra = 0.0,
+    this.factura_local_uuid,
+    required this.detalles,
+  });
+
+  Map<String, dynamic> toJson() => {
+        if (empleado_id != null) 'empleado_id': empleado_id,
+        if (cliente_id != null) 'cliente_id': cliente_id,
+        'canal_origen': canal_origen,
+        if (mesa != null) 'mesa': mesa,
+        'subtotal': subtotal,
+        'total_impuestos': total_impuestos,
+        'total_general': total_general,
+        'propina_extra': propina_extra,
+        if (factura_local_uuid != null) 'factura_local_uuid': factura_local_uuid,
+        'detalles': detalles.map((d) => d.toJson()).toList(),
+      };
+}
+
+class DetallePedidoRequest {
+  final int producto_id;
+  final int cantidad;
+  final double precio_unitario;
+  final double monto_impuesto;
+  final double subtotal_linea;
+  final String? detalle_local_uuid;
+
+  DetallePedidoRequest({
+    required this.producto_id,
+    required this.cantidad,
+    required this.precio_unitario,
+    required this.monto_impuesto,
+    required this.subtotal_linea,
+    this.detalle_local_uuid,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'producto_id': producto_id,
+        'cantidad': cantidad,
+        'precio_unitario': precio_unitario,
+        'monto_impuesto': monto_impuesto,
+        'subtotal_linea': subtotal_linea,
+        if (detalle_local_uuid != null) 'detalle_local_uuid': detalle_local_uuid,
+      };
+}
+
+class PedidoRequest {
+  final String? factura_local_uuid;
+  final int? mesa;
+  final double subtotal;
+  final double total_impuestos;
+  final double propina_legal;
+  final double propina_extra;
+  final double total_general;
+  final List<DetallePedidoRequest> detalles;
+
+  PedidoRequest({
+    this.factura_local_uuid,
+    this.mesa,
+    required this.subtotal,
+    required this.total_impuestos,
+    this.propina_legal = 0.0,
+    this.propina_extra = 0.0,
+    required this.total_general,
+    required this.detalles,
+  });
+
+  Map<String, dynamic> toJson() => {
+        if (factura_local_uuid != null) 'factura_local_uuid': factura_local_uuid,
+        if (mesa != null) 'mesa': mesa,
+        'subtotal': subtotal,
+        'total_impuestos': total_impuestos,
+        'propina_legal': propina_legal,
+        'propina_extra': propina_extra,
+        'total_general': total_general,
+        'detalles': detalles.map((d) => d.toJson()).toList(),
+      };
+}
+
+class DetallePedidoResponse {
+  final int id;
+  final int producto_id;
+  final int cantidad;
+  final double precio_unitario_historico;
+  final double impuesto_historico;
+  final double monto_impuesto;
+  final double subtotal_linea;
+  final String? detalle_local_uuid;
+
+  DetallePedidoResponse({
+    required this.id,
+    required this.producto_id,
+    required this.cantidad,
+    required this.precio_unitario_historico,
+    required this.impuesto_historico,
+    required this.monto_impuesto,
+    required this.subtotal_linea,
+    this.detalle_local_uuid,
+  });
+
+  factory DetallePedidoResponse.fromJson(Map<String, dynamic> json) =>
+      DetallePedidoResponse(
+        id: json['id'] as int,
+        producto_id: json['producto_id'] as int,
+        cantidad: json['cantidad'] as int,
+        precio_unitario_historico: (json['precio_unitario_historico'] as num).toDouble(),
+        impuesto_historico: (json['impuesto_historico'] as num).toDouble(),
+        monto_impuesto: (json['monto_impuesto'] as num).toDouble(),
+        subtotal_linea: (json['subtotal_linea'] as num).toDouble(),
+        detalle_local_uuid: json['detalle_local_uuid'] as String?,
+      );
+}
+
+class PedidoResponse {
+  final String? mensaje;
+  final int? id;
+  final String? factura_local_uuid;
+  final int? cliente_id;
+  final String? canal_origen;
+  final int? mesa;
+  final String? estado;
+  final String? estado_sincronizacion;
+  final double? propina_legal;
+  final double? subtotal;
+  final double? total_impuestos;
+  final double? propina_extra;
+  final double? total_general;
+  final DateTime? fecha_creacion;
+
+  PedidoResponse({
+    this.mensaje,
+    this.id,
+    this.factura_local_uuid,
+    this.cliente_id,
+    this.canal_origen,
+    this.mesa,
+    this.estado,
+    this.estado_sincronizacion,
+    this.propina_legal,
+    this.subtotal,
+    this.total_impuestos,
+    this.propina_extra,
+    this.total_general,
+    this.fecha_creacion,
+  });
+
+factory PedidoResponse.fromJson(Map<String, dynamic> json) {
+    double? parseNullableDouble(dynamic value) {
+      if (value == null) return null;
+      if (value is num) return value.toDouble();
+      if (value is String) return double.tryParse(value);
+      return null;
+    }
+
+    return PedidoResponse(
+      mensaje: json['mensaje'] as String?,
+      id: json['id'] as int?,
+      factura_local_uuid: json['factura_local_uuid'] as String?,
+      cliente_id: json['cliente_id'] as int?,
+      canal_origen: json['canal_origen'] as String?,
+      mesa: json['mesa'] as int?,
+      estado: json['estado'] as String?,
+      estado_sincronizacion: json['estado_sincronizacion'] as String?,
+      
+      propina_legal: parseNullableDouble(json['propina_legal']),
+      subtotal: parseNullableDouble(json['subtotal']),
+      total_impuestos: parseNullableDouble(json['total_impuestos']),
+      propina_extra: parseNullableDouble(json['propina_extra']),
+      total_general: parseNullableDouble(json['total_general']),
+      
+      fecha_creacion: json['fecha_creacion'] != null 
+          ? DateTime.tryParse(json['fecha_creacion'] as String) 
+          : null,
+    );
+  }
+}
+
+class CancelarPedidoRequest {
+  final int empleado_id;
+  final String motivo;
+
+  CancelarPedidoRequest({
+    required this.empleado_id,
+    required this.motivo,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'empleado_id': empleado_id,
+        'motivo': motivo,
+      };
+}
+
+class DetalleItemAdicional {
   final String detalle_local_uuid;
   final int producto_id;
   final int cantidad;
@@ -182,7 +420,7 @@ class DetallePedidoRequest {
   final double monto_impuesto;
   final double subtotal_linea;
 
-  DetallePedidoRequest({
+  DetalleItemAdicional({
     required this.detalle_local_uuid,
     required this.producto_id,
     required this.cantidad,
@@ -201,102 +439,23 @@ class DetallePedidoRequest {
       };
 }
 
-class CrearPedidoRequest {
-  final int numero_mesa;
-  final int cliente_id;
-  final String factura_local_uuid;
-  final double subtotal;
-  final double total_impuestos;
-  final double propina_legal;
-  final double propina_extra;
-  final double total_general;
-  final String? comentarios_cocina;
-
-  final List<DetallePedidoRequest> detalles;
-
-  CrearPedidoRequest({
-    required this.numero_mesa,
-    required this.cliente_id,
-    required this.factura_local_uuid,
-    required this.subtotal,
-    required this.total_impuestos,
-    required this.propina_legal,
-    required this.propina_extra,
-    required this.total_general,
-    this.comentarios_cocina,
-    required this.detalles,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'numero_mesa': numero_mesa,
-        'mesa': numero_mesa,
-        'cliente_id': cliente_id,
-        'factura_local_uuid': factura_local_uuid,
-        'subtotal': subtotal,
-        'total_impuestos': total_impuestos,
-        'propina_legal': propina_legal,
-        'propina_extra': propina_extra,
-        'total_general': total_general,
-        if (comentarios_cocina != null)
-          'comentarios_cocina': comentarios_cocina,
-        'detalles': detalles.map((d) => d.toJson()).toList(),
-      };
-}
-
-class CrearPedidoResponse {
-  final String mensaje;
-  final String? factura_local_uuid;
-  final String? estado_sincronizacion;
-  final String? estado_preparacion;
-
-  CrearPedidoResponse({
-    required this.mensaje,
-    this.factura_local_uuid,
-    this.estado_sincronizacion,
-    this.estado_preparacion,
-  });
-
-  factory CrearPedidoResponse.fromJson(Map<String, dynamic> json) =>
-      CrearPedidoResponse(
-        mensaje: json['mensaje'] as String,
-        factura_local_uuid: json['factura_local_uuid'] as String?,
-        estado_sincronizacion: json['estado_sincronizacion'] as String?,
-        estado_preparacion: json['estado_preparacion'] as String?,
-      );
-}
-
-
-class AgregarPedidoRequest {
-  final int cliente_id;
-  final int numero_mesa;
-  final String? comentarios_cocina;
+class AgregarItemsRequest {
+  final int? cliente_id;
   final double nuevo_subtotal_agregado;
   final double nuevo_impuesto_agregado;
-  final double nueva_propina_agregada;
-  final double nuevo_total_agregado;
-  final List<DetallePedidoRequest> detalles_adicionales;
+  final List<DetalleItemAdicional> detalles_adicionales;
 
-  AgregarPedidoRequest({
-    required this.cliente_id,
-    required this.numero_mesa,
-    this.comentarios_cocina,
+  AgregarItemsRequest({
+    this.cliente_id,
     required this.nuevo_subtotal_agregado,
     required this.nuevo_impuesto_agregado,
-    required this.nueva_propina_agregada,
-    required this.nuevo_total_agregado,
     required this.detalles_adicionales,
   });
 
   Map<String, dynamic> toJson() => {
-        'cliente_id': cliente_id,
-        'numero_mesa': numero_mesa,
-        'mesa': numero_mesa,
-        if (comentarios_cocina != null)
-          'comentarios_cocina': comentarios_cocina,
+        if (cliente_id != null) 'cliente_id': cliente_id,
         'nuevo_subtotal_agregado': nuevo_subtotal_agregado,
         'nuevo_impuesto_agregado': nuevo_impuesto_agregado,
-        'nueva_propina_agregada': nueva_propina_agregada,
-        'nuevo_total_agregado': nuevo_total_agregado,
         'detalles_adicionales':
             detalles_adicionales.map((d) => d.toJson()).toList(),
       };
@@ -324,27 +483,49 @@ class AgregarPedidoResponse {
       );
 }
 
+class SolicitarCuentaRequest {
+  final String metodo_pago_preferido;
+  final double propina_extra;
 
-class ItemConsumidoDto {
+  SolicitarCuentaRequest({
+    this.metodo_pago_preferido = 'EFECTIVO',
+    this.propina_extra = 0.0,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'metodo_pago_preferido': metodo_pago_preferido,
+        'propina_extra': propina_extra,
+      };
+}
+
+
+class ItemResumen {
   final String producto_nombre;
   final int cantidad;
   final double subtotal_linea;
   final String estado_preparacion;
 
-  ItemConsumidoDto({
+  ItemResumen({
     required this.producto_nombre,
     required this.cantidad,
     required this.subtotal_linea,
     required this.estado_preparacion,
   });
 
-  factory ItemConsumidoDto.fromJson(Map<String, dynamic> json) =>
-      ItemConsumidoDto(
-        producto_nombre: json['producto_nombre'] as String,
-        cantidad: json['cantidad'] as int,
-        subtotal_linea: (json['subtotal_linea'] as num).toDouble(),
-        estado_preparacion: json['estado_preparacion'] as String,
-      );
+  factory ItemResumen.fromJson(Map<String, dynamic> json) {
+    double parseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is num) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? 0.0;
+      return 0.0;
+    }
+    return ItemResumen(
+      producto_nombre: json['producto_nombre'] as String? ?? 'Desconocido',
+      cantidad: json['cantidad'] as int? ?? 1,
+      subtotal_linea: parseDouble(json['subtotal_linea']),
+      estado_preparacion: json['estado_preparacion'] as String? ?? 'PENDIENTE',
+    );
+  }
 }
 
 class ResumenCuentaResponse {
@@ -353,8 +534,9 @@ class ResumenCuentaResponse {
   final double subtotal_acumulado;
   final double total_impuestos_acumulado;
   final double propina_legal_acumulada;
+  final double propina_extra_acumulada;
   final double total_general_acumulado;
-  final List<ItemConsumidoDto> items_consumidos;
+  final List<ItemResumen> items_consumidos;
 
   ResumenCuentaResponse({
     required this.factura_local_uuid,
@@ -362,52 +544,31 @@ class ResumenCuentaResponse {
     required this.subtotal_acumulado,
     required this.total_impuestos_acumulado,
     required this.propina_legal_acumulada,
+    required this.propina_extra_acumulada,
     required this.total_general_acumulado,
     required this.items_consumidos,
   });
 
-  factory ResumenCuentaResponse.fromJson(Map<String, dynamic> json) =>
-      ResumenCuentaResponse(
-        factura_local_uuid: json['factura_local_uuid'] as String,
-        estado_cuenta: json['estado_cuenta'] as String,
-        subtotal_acumulado:
-            (json['subtotal_acumulado'] as num).toDouble(),
-        total_impuestos_acumulado:
-            (json['total_impuestos_acumulado'] as num).toDouble(),
-        propina_legal_acumulada:
-            (json['propina_legal_acumulada'] as num).toDouble(),
-        total_general_acumulado:
-            (json['total_general_acumulado'] as num).toDouble(),
-        items_consumidos: (json['items_consumidos'] as List)
-            .map((e) => ItemConsumidoDto.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      );
-}
-
-
-class SolicitarCuentaRequest {
-  final int numero_mesa;
-  final String metodo_pago_preferido;
-  final double propina_extra;
-  final bool requiere_comprobante_fiscal;
-  final String? rnc_comprobante;
-
-  SolicitarCuentaRequest({
-    required this.numero_mesa,
-    required this.metodo_pago_preferido,
-    required this.propina_extra,
-    required this.requiere_comprobante_fiscal,
-    this.rnc_comprobante,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'numero_mesa': numero_mesa,
-        'mesa': numero_mesa,
-        'metodo_pago_preferido': metodo_pago_preferido,
-        'propina_extra': propina_extra,
-        'requiere_comprobante_fiscal': requiere_comprobante_fiscal,
-        'rnc_comprobante': rnc_comprobante,
-      };
+  factory ResumenCuentaResponse.fromJson(Map<String, dynamic> json) {
+    double parseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is num) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? 0.0;
+      return 0.0;
+    }
+    return ResumenCuentaResponse(
+      factura_local_uuid: json['factura_local_uuid'] as String,
+      estado_cuenta: json['estado_cuenta'] as String,
+      subtotal_acumulado: parseDouble(json['subtotal_acumulado']),
+      total_impuestos_acumulado: parseDouble(json['total_impuestos_acumulado']),
+      propina_legal_acumulada: parseDouble(json['propina_legal_acumulada']),
+      propina_extra_acumulada: parseDouble(json['propina_extra_acumulada']),
+      total_general_acumulado: parseDouble(json['total_general_acumulado']),
+      items_consumidos: (json['items_consumidos'] as List?)
+              ?.map((e) => ItemResumen.fromJson(e as Map<String, dynamic>))
+              .toList() ?? [],
+    );
+  }
 }
 
 

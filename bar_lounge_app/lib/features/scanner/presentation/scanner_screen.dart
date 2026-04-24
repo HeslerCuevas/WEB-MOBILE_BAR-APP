@@ -9,39 +9,53 @@ class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
   @override
   ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
+
 }
 class _ScannerScreenState extends ConsumerState<ScannerScreen>
     with SingleTickerProviderStateMixin {
+
   final _tableCtrl = TextEditingController();
+
   late AnimationController _pulse;
+
   late Animation<double> _anim;
   bool _loading = false;
+
   String? _error;
+
   @override
   void initState() {
     super.initState();
+
     _pulse = AnimationController(duration: const Duration(seconds: 2), vsync: this)
       ..repeat(reverse: true);
+
     _anim = Tween(begin: 0.3, end: 0.9).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
   }
+
   @override
   void dispose() {
     _tableCtrl.dispose();
     _pulse.dispose();
     super.dispose();
   }
+
   Future<void> _processTableLinked(int tableNum) async {
     final api = ref.read(apiServiceProvider);
+
     final session = await ref.read(sesionDaoProvider).getActiveSession();
+
     final resp = await api.vincularMesa(VincularMesaRequest(
       codigo_qr_mesa: 'MESA-${tableNum.toString().padLeft(2, '0')}',
       numero_mesa: tableNum,
     ));
+
     await ref.read(mesaDaoProvider).linkTable(
       numeroMesa: tableNum, 
       codigoQr: 'MESA-${tableNum.toString().padLeft(2, '0')}',
       facturaUuid: resp.factura_local_uuid_activa,
     );
+
     if (resp.factura_local_uuid_activa != null && session?.clienteId != null) {
       try {
         final sum = await api.getResumenCuenta(resp.factura_local_uuid_activa!);
@@ -56,11 +70,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
           estadoCuenta: sum.estado_cuenta,
           items: sum.items_consumidos,
         );
+
       } catch (e) {
         debugPrint('Did not sync resume: $e');
       }
     }
   }
+
   Future<void> _confirmTable() async {
     final raw = _tableCtrl.text.trim();
     final tableNum = int.tryParse(raw);
@@ -68,6 +84,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       setState(() => _error = 'Enter a valid table number.');
       return;
     }
+
     setState(() { _loading = true; _error = null; });
     try {
       await _processTableLinked(tableNum);
@@ -78,6 +95,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       if (mounted) setState(() => _loading = false);
     }
   }
+  
   void _simulateScan() async {
     setState(() { _loading = true; _error = null; });
     await Future.delayed(const Duration(milliseconds: 800));
@@ -88,6 +106,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       if (mounted) setState(() { _loading = false; _error = 'Failed to scan.'; });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -183,6 +202,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       ),
     );
   }
+
   Widget _corner(Alignment alignment) {
     final isTop = alignment == Alignment.topLeft || alignment == Alignment.topRight;
     final isLeft = alignment == Alignment.topLeft || alignment == Alignment.bottomLeft;

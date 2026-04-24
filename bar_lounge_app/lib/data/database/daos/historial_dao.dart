@@ -36,14 +36,15 @@ class HistorialDao extends DatabaseAccessor<AppDatabase>
     if (clienteId == null) {
       return Stream.value([]);
     }
-    final ordersQuery = select(historialPedidos)
-      ..where((o) => o.clienteId.equals(clienteId));
-    return ordersQuery.watch().asyncExpand((orders) {
-      if (orders.isEmpty) return Stream.value([]);
-      final uuids = orders.map((o) => o.facturaLocalUuid).toList();
-      return (select(historialDetalles)
-            ..where((d) => d.facturaLocalUuid.isIn(uuids)))
-          .watch();
+    final query = select(historialDetalles).join([
+      innerJoin(
+        historialPedidos,
+        historialDetalles.facturaLocalUuid.equalsExp(historialPedidos.facturaLocalUuid),
+      ),
+    ])..where(historialPedidos.clienteId.equals(clienteId));
+
+    return query.watch().map((rows) {
+      return rows.map((row) => row.readTable(historialDetalles)).toList();
     });
   }
   Future<void> updateOrderTotals({
@@ -107,7 +108,8 @@ class HistorialDao extends DatabaseAccessor<AppDatabase>
     required double propinaLegal,
     required double totalGeneral,
     required String estadoCuenta,
-    required List<ItemConsumidoDto> items,
+    required List<ItemResumen> items,
+    double propinaVoluntaria = 0.0,
   }) async {
     await (delete(historialPedidos)..where((o) => o.facturaLocalUuid.equals(facturaUuid))).go();
     await (delete(historialDetalles)..where((d) => d.facturaLocalUuid.equals(facturaUuid))).go();
@@ -121,10 +123,11 @@ class HistorialDao extends DatabaseAccessor<AppDatabase>
         propinaLegal: propinaLegal,
         totalGeneral: totalGeneral,
         estadoCuenta: Value(estadoCuenta),
+        propinaVoluntaria: Value(propinaVoluntaria),
       ),
     );
     final catalogProducts = await select(productosCache).get();
-    final details = items.map((ItemConsumidoDto i) {
+    final details = items.map((ItemResumen i) {
       final subL = i.subtotal_linea;
       final qty = i.cantidad;
       final pU = qty > 0 ? (subL / qty) : 0.0;

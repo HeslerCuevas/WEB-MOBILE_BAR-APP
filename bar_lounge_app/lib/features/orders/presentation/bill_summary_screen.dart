@@ -988,6 +988,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
     int numeroMesa,
   ) async {
     if (items.isEmpty) return;
+
     if (activeSession == null || activeSession.clienteId == null) {
       _showDialog(
         'Sign In Required',
@@ -995,10 +996,13 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       );
       return;
     }
+
     setState(() => _confirming = true);
+
     final api = ref.read(apiServiceProvider);
     final historialDao = ref.read(historialDaoProvider);
     final carritoDao = ref.read(carritoDaoProvider);
+
     final subtotal = items.fold<double>(
       0,
       (sum, item) => sum + item.subtotalLinea,
@@ -1007,36 +1011,71 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       0,
       (sum, item) => sum + item.montoImpuesto,
     );
+
     final propinaLegal = double.parse((subtotal * 0.10).toStringAsFixed(2));
     final totalGeneral = double.parse(
       (subtotal + totalImpuestos + propinaLegal).toStringAsFixed(2),
     );
+
     final uuid = activeOrder?.facturaLocalUuid ?? _uuid.v4();
-    final detalles =
-        items.map((item) {
-          return DetallePedidoRequest(
-            detalle_local_uuid: item.detalleLocalUuid,
-            producto_id: item.productoId,
-            cantidad: item.cantidad,
-            precio_unitario: item.precioUnitario,
-            monto_impuesto: item.montoImpuesto,
-            subtotal_linea: item.subtotalLinea,
-          );
-        }).toList();
+
+    final itemsConNuevosIds = items.map((item) {
+      return {
+        'item': item,
+        'nuevo_detalle_uuid': _uuid.v4(), 
+      };
+    }).toList();
+
+    final detallesCreate = itemsConNuevosIds.map((mapData) {
+      final item = mapData['item'] as CarritoLocalData;
+      final nuevoId = mapData['nuevo_detalle_uuid'] as String;
+
+      return DetallePedidoCreate(
+        detalle_local_uuid: nuevoId,
+        producto_id: item.productoId,
+        cantidad: item.cantidad,
+        precio_unitario: item.precioUnitario,
+        monto_impuesto: item.montoImpuesto,
+        subtotal_linea: double.parse(
+          (item.subtotalLinea + item.montoImpuesto).toStringAsFixed(2),
+        ),
+      );
+    }).toList();
+
+    final detallesAdicional = itemsConNuevosIds.map((mapData) {
+      final item = mapData['item'] as CarritoLocalData;
+      final nuevoId = mapData['nuevo_detalle_uuid'] as String;
+
+      return DetalleItemAdicional(
+        detalle_local_uuid: nuevoId,
+        producto_id: item.productoId,
+        cantidad: item.cantidad,
+        precio_unitario: item.precioUnitario,
+        monto_impuesto: item.montoImpuesto,
+        subtotal_linea: double.parse(
+          (item.subtotalLinea + item.montoImpuesto).toStringAsFixed(2),
+        ),
+      );
+    }).toList();
+
     try {
       if (activeOrder == null) {
-        final request = CrearPedidoRequest(
-          numero_mesa: numeroMesa,
+        final request = PedidoCreateRequest(
+          mesa: numeroMesa,
           cliente_id: activeSession.clienteId!,
+          canal_origen: 'MOVIL',
           factura_local_uuid: uuid,
           subtotal: subtotal,
           total_impuestos: totalImpuestos,
-          propina_legal: propinaLegal,
+          total_general: double.parse(
+            (subtotal + totalImpuestos).toStringAsFixed(2),
+          ),
           propina_extra: 0.0,
-          total_general: totalGeneral,
-          detalles: detalles,
+          detalles: detallesCreate,
         );
+
         await api.crearPedido(request);
+
         await historialDao.createOrder(
           HistorialPedidosCompanion.insert(
             facturaLocalUuid: uuid,
@@ -1047,52 +1086,55 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
             propinaLegal: propinaLegal,
             totalGeneral: totalGeneral,
           ),
-          items
-              .map(
-                (item) => HistorialDetallesCompanion.insert(
-                  detalleLocalUuid: item.detalleLocalUuid,
-                  facturaLocalUuid: uuid,
-                  productoId: item.productoId,
-                  productoNombre: item.nombreProducto,
-                  cantidad: item.cantidad,
-                  precioUnitario: item.precioUnitario,
-                  montoImpuesto: item.montoImpuesto,
-                  subtotalLinea: item.subtotalLinea,
-                ),
-              )
-              .toList(),
+          itemsConNuevosIds.map((mapData) {
+            final item = mapData['item'] as CarritoLocalData;
+            final nuevoId = mapData['nuevo_detalle_uuid'] as String;
+
+            return HistorialDetallesCompanion.insert(
+              detalleLocalUuid: nuevoId,
+              facturaLocalUuid: uuid,
+              productoId: item.productoId,
+              productoNombre: item.nombreProducto,
+              cantidad: item.cantidad,
+              precioUnitario: item.precioUnitario,
+              montoImpuesto: item.montoImpuesto,
+              subtotalLinea: item.subtotalLinea,
+            );
+          }).toList(),
         );
+
       } else {
-        final request = AgregarPedidoRequest(
+        final request = AgregarItemsRequest(
           cliente_id: activeSession.clienteId!,
-          numero_mesa: numeroMesa,
-          detalles_adicionales: detalles,
+          detalles_adicionales: detallesAdicional,
           nuevo_subtotal_agregado: subtotal,
           nuevo_impuesto_agregado: totalImpuestos,
-          nueva_propina_agregada: propinaLegal,
-          nuevo_total_agregado: totalGeneral,
         );
+
         final response = await api.agregarAPedido(
           activeOrder.facturaLocalUuid,
           request,
         );
+
         await historialDao.appendOrderDetails(
           activeOrder.facturaLocalUuid,
-          items
-              .map(
-                (item) => HistorialDetallesCompanion.insert(
-                  detalleLocalUuid: item.detalleLocalUuid,
-                  facturaLocalUuid: activeOrder.facturaLocalUuid,
-                  productoId: item.productoId,
-                  productoNombre: item.nombreProducto,
-                  cantidad: item.cantidad,
-                  precioUnitario: item.precioUnitario,
-                  montoImpuesto: item.montoImpuesto,
-                  subtotalLinea: item.subtotalLinea,
-                ),
-              )
-              .toList(),
+          itemsConNuevosIds.map((mapData) {
+            final item = mapData['item'] as CarritoLocalData;
+            final nuevoId = mapData['nuevo_detalle_uuid'] as String;
+
+            return HistorialDetallesCompanion.insert(
+              detalleLocalUuid: nuevoId,
+              facturaLocalUuid: activeOrder.facturaLocalUuid,
+              productoId: item.productoId,
+              productoNombre: item.nombreProducto,
+              cantidad: item.cantidad,
+              precioUnitario: item.precioUnitario,
+              montoImpuesto: item.montoImpuesto,
+              subtotalLinea: item.subtotalLinea,
+            );
+          }).toList(),
         );
+
         await historialDao.updateOrderTotals(
           facturaUuid: activeOrder.facturaLocalUuid,
           newSubtotal:
@@ -1103,9 +1145,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
           newTotalImpuestos:
               response.nuevo_total_impuestos ??
               double.parse(
-                (activeOrder.totalImpuestos + totalImpuestos).toStringAsFixed(
-                  2,
-                ),
+                (activeOrder.totalImpuestos + totalImpuestos).toStringAsFixed(2),
               ),
           newTotalGeneral:
               response.nuevo_total_general ??
@@ -1114,7 +1154,9 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
               ),
         );
       }
+
       await carritoDao.clearCart();
+
       if (mounted) {
         _showDialog(
           'Order Confirmed',
@@ -1130,6 +1172,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       if (mounted) setState(() => _confirming = false);
     }
   }
+
   Future<void> _requestPayment(
     HistorialPedido activeOrder,
     SesionClienteData? activeSession,
@@ -1153,11 +1196,8 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       await api.solicitarCuenta(
         activeOrder.facturaLocalUuid,
         SolicitarCuentaRequest(
-          numero_mesa: numeroMesa,
           metodo_pago_preferido: 'EFECTIVO',
           propina_extra: double.parse(extraTip.toStringAsFixed(2)),
-          requiere_comprobante_fiscal: false,
-          rnc_comprobante: null,
         ),
       );
       final remoteResumen = await api.getResumenCuenta(activeOrder.facturaLocalUuid);
@@ -1169,8 +1209,9 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
         totalImpuestos: remoteResumen.total_impuestos_acumulado,
         propinaLegal: remoteResumen.propina_legal_acumulada,
         totalGeneral: remoteResumen.total_general_acumulado,
-        estadoCuenta: 'PENDING_PAYMENT', 
+        estadoCuenta: 'PENDING_PAYMENT',
         items: remoteResumen.items_consumidos,
+        propinaVoluntaria: double.parse(extraTip.toStringAsFixed(2)),
       );
       if (mounted) {
         _showDialog(
@@ -1183,7 +1224,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       if (mounted) {
         _showDialog(
           'Payment Failed',
-          'Could not request payment. Please try again later.',
+          'Error: $error',
         );
         setState(() => _paymentPending = false);
       }

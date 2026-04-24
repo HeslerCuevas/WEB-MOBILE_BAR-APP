@@ -6,8 +6,5 @@ void main() async {
   final db = AppDatabase();
   await db.clearAllTables();
   await db.close();
-  print('========================================================');
-  print('✅ SUCCESSFULLY WIPED ALL ROWS FROM ALL TABLES IN THE LOCAL DB');
-  print('========================================================');
   exit(0);
 }

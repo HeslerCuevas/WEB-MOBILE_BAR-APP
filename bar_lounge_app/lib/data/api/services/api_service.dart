@@ -97,18 +97,18 @@ class ApiService {
   }
 
 
-  Future<CrearPedidoResponse> crearPedido(CrearPedidoRequest request) async {
+  Future<PedidoResponse> crearPedido(PedidoCreateRequest request) async {
     final response = await _client.dio.post(
       '/pedidos/',
       data: request.toJson(),
     );
-    return CrearPedidoResponse.fromJson(response.data);
+    return PedidoResponse.fromJson(response.data);
   }
 
 
   Future<AgregarPedidoResponse> agregarAPedido(
     String facturaLocalUuid,
-    AgregarPedidoRequest request,
+    AgregarItemsRequest request,
   ) async {
     final response = await _client.dio.patch(
       '/clientes/pedidos/$facturaLocalUuid/agregar-items',

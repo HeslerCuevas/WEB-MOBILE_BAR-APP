@@ -81,15 +81,6 @@ class _ReceiptBody extends ConsumerWidget {
                     ),
                   ),
                 ),
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(Icons.person, color: AppColors.onSurfaceVariant, size: 20),
-                ),
               ],
             ),
           ),
@@ -205,10 +196,16 @@ class _ReceiptBody extends ConsumerWidget {
                       _totalRow('ITBIS (18%)', '\$${order.totalImpuestos.toStringAsFixed(2)}'),
                       const SizedBox(height: 8),
                       _totalRow('Legal Tip (10%)', '\$${order.propinaLegal.toStringAsFixed(2)}'),
-                      if (order.propinaVoluntaria > 0) ...[
-                        const SizedBox(height: 8),
-                        _totalRow('Service Tip', '\$${order.propinaVoluntaria.toStringAsFixed(2)}'),
-                      ],
+                      Builder(builder: (context) {
+                        final tip = _resolvedExtraTip();
+                        if (tip <= 0) return const SizedBox.shrink();
+                        return Column(
+                          children: [
+                            const SizedBox(height: 8),
+                            _totalRow('Extra Tip', '\$${tip.toStringAsFixed(2)}'),
+                          ],
+                        );
+                      }),
                     ],
                   ),
                 ),
@@ -293,8 +290,21 @@ class _ReceiptBody extends ConsumerWidget {
       ),
     );
   }
+
+  double _resolvedExtraTip() {
+    if (order.propinaVoluntaria > 0.001) return order.propinaVoluntaria;
+    final derived = order.totalGeneral - order.subtotal - order.totalImpuestos - order.propinaLegal;
+    return derived > 0.01 ? derived : 0.0;
+  }
+
   double _computeTotal() {
-    return order.subtotal + order.totalImpuestos + order.propinaLegal + order.propinaVoluntaria;
+    final base = order.subtotal + order.totalImpuestos + order.propinaLegal;
+    final tip = _resolvedExtraTip();
+
+    if (order.propinaVoluntaria > 0.001) {
+      return base + order.propinaVoluntaria;
+    }
+    return tip > 0.01 ? order.totalGeneral : base;
   }
   String _paymentStatusLabel() {
     switch (order.estadoCuenta) {

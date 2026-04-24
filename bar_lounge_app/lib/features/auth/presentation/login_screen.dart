@@ -128,13 +128,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           decoration: InputDecoration(hintText: 'name@domain.com', prefixIcon: const Icon(Icons.alternate_email, color: AppColors.outline)),
                         ),
                         const SizedBox(height: 20),
-                        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                          _label('PASSWORD'),
-                          GestureDetector(
-                            onTap: () => context.push('/forgot-password'),
-                            child: Text('Forgot Password?', style: GoogleFonts.manrope(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.secondary)),
-                          ),
-                        ]),
+                        _label('PASSWORD'),
                         const SizedBox(height: 8),
                         TextField(
                           controller: _passCtrl,
