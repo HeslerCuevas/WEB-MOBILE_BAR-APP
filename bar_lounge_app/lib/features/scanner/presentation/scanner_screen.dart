@@ -2,110 +2,259 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+
 import '../../../core/theme/app_colors.dart';
-import '../../../data/providers/providers.dart';
 import '../../../data/api/dto/api_models.dart';
+import '../../../data/providers/providers.dart';
+
+/// QR Scanner screen — visually identical to the original design.
+///
+/// Expected QR URL format:
+///   https://nocturnal-bar.app/scan?sucursal=1&mesa=5
+///
+/// Flow:
+///   1. Camera detects QR → stops camera to prevent duplicate scans.
+///   2. Parses URL, extracts [sucursalId] and [mesaId].
+///   3. Updates [sessionProvider] with the scanned IDs.
+///   4. Calls [vincularMesa] API to bind the table server-side.
+///   5. Navigates to /menu and shows a SnackBar with "Mesa X vinculada".
+///   6. On error → shows error SnackBar and restarts camera.
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
+
   @override
   ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
-
 }
+
 class _ScannerScreenState extends ConsumerState<ScannerScreen>
     with SingleTickerProviderStateMixin {
+  // ── Camera controller ──────────────────────────────────────────────────────
+  final MobileScannerController _cameraController = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    returnImage: false,
+  );
 
+  // ── Manual entry fallback ──────────────────────────────────────────────────
   final _tableCtrl = TextEditingController();
 
+  // ── Pulse animation (same as original) ────────────────────────────────────
   late AnimationController _pulse;
-
   late Animation<double> _anim;
-  bool _loading = false;
 
+  // ── State ──────────────────────────────────────────────────────────────────
+  bool _loading = false;
   String? _error;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Lifecycle
+  // ─────────────────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
-
-    _pulse = AnimationController(duration: const Duration(seconds: 2), vsync: this)
-      ..repeat(reverse: true);
-
-    _anim = Tween(begin: 0.3, end: 0.9).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
+    _pulse =
+        AnimationController(duration: const Duration(seconds: 2), vsync: this)
+          ..repeat(reverse: true);
+    _anim = Tween(begin: 0.3, end: 0.9)
+        .animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
   }
 
   @override
   void dispose() {
     _tableCtrl.dispose();
     _pulse.dispose();
+    _cameraController.dispose();
     super.dispose();
   }
 
-  Future<void> _processTableLinked(int tableNum) async {
-    final api = ref.read(apiServiceProvider);
+  // ─────────────────────────────────────────────────────────────────────────
+  // QR Detection callback
+  // ─────────────────────────────────────────────────────────────────────────
 
-    final session = await ref.read(sesionDaoProvider).getActiveSession();
+  void _onDetect(BarcodeCapture capture) {
+    if (_loading) return;
 
-    final resp = await api.vincularMesa(VincularMesaRequest(
-      codigo_qr_mesa: 'MESA-${tableNum.toString().padLeft(2, '0')}',
-      numero_mesa: tableNum,
-    ));
+    final barcodes = capture.barcodes;
+    if (barcodes.isEmpty) return;
 
-    await ref.read(mesaDaoProvider).linkTable(
-      numeroMesa: tableNum, 
-      codigoQr: 'MESA-${tableNum.toString().padLeft(2, '0')}',
-      facturaUuid: resp.factura_local_uuid_activa,
-    );
+    final rawValue = barcodes.first.rawValue;
+    if (rawValue == null || rawValue.isEmpty) return;
 
-    if (resp.factura_local_uuid_activa != null && session?.clienteId != null) {
-      try {
-        final sum = await api.getResumenCuenta(resp.factura_local_uuid_activa!);
-        await ref.read(historialDaoProvider).syncExistingOrder(
-          clienteId: session!.clienteId!,
-          numeroMesa: tableNum,
-          facturaUuid: resp.factura_local_uuid_activa!,
-          subtotal: sum.subtotal_acumulado,
-          totalImpuestos: sum.total_impuestos_acumulado,
-          propinaLegal: sum.propina_legal_acumulada,
-          totalGeneral: sum.total_general_acumulado,
-          estadoCuenta: sum.estado_cuenta,
-          items: sum.items_consumidos,
-        );
-
-      } catch (e) {
-        debugPrint('Did not sync resume: $e');
-      }
-    }
+    // Stop camera immediately to prevent duplicate scans.
+    _cameraController.stop();
+    _handleScannedValue(rawValue);
   }
 
-  Future<void> _confirmTable() async {
-    final raw = _tableCtrl.text.trim();
-    final tableNum = int.tryParse(raw);
-    if (tableNum == null || tableNum <= 0) {
-      setState(() => _error = 'Enter a valid table number.');
+  // ─────────────────────────────────────────────────────────────────────────
+  // Core processing
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Parses [rawValue] as a URL and extracts sucursal + mesa query params.
+  void _handleScannedValue(String rawValue) {
+    final uri = Uri.tryParse(rawValue);
+
+    if (uri == null ||
+        !uri.queryParameters.containsKey('sucursal') ||
+        !uri.queryParameters.containsKey('mesa')) {
+      _showErrorSnackBar('Invalid QR. Should be like: …?sucursal=X&mesa=Y');
+      _cameraController.start();
       return;
     }
 
-    setState(() { _loading = true; _error = null; });
+    final sucursalId = int.tryParse(uri.queryParameters['sucursal']!);
+    final mesaId = int.tryParse(uri.queryParameters['mesa']!);
+
+    if (sucursalId == null || mesaId == null || sucursalId <= 0 || mesaId <= 0) {
+      _showErrorSnackBar('Invalid QR Parameters. Must be positive integers.');
+      _cameraController.start();
+      return;
+    }
+
+    _processTableLinked(sucursalId: sucursalId, mesaId: mesaId);
+  }
+
+  /// Performs the full table-linking flow.
+  Future<void> _processTableLinked({
+    required int sucursalId,
+    required int mesaId,
+  }) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
     try {
-      await _processTableLinked(tableNum);
-      if (mounted) context.go('/menu');
+      // 1. Update global session state.
+      ref.read(sessionProvider.notifier).setSession(
+            sucursalId: sucursalId,
+            mesaId: mesaId,
+          );
+
+      // 2. Call the backend vincularMesa endpoint.
+      final api = ref.read(apiServiceProvider);
+      final resp = await api.vincularMesa(
+        VincularMesaRequest(
+          codigo_qr_mesa: 'MESA-${mesaId.toString().padLeft(2, '0')}',
+          numero_mesa: mesaId,
+        ),
+      );
+
+      // 3. Persist the active mesa in the local database.
+      await ref.read(mesaDaoProvider).linkTable(
+            numeroMesa: mesaId,
+            codigoQr: 'MESA-${mesaId.toString().padLeft(2, '0')}',
+            facturaUuid: resp.factura_local_uuid_activa,
+          );
+
+      // 4. If there is an active factura, sync the order summary locally.
+      if (resp.factura_local_uuid_activa != null) {
+        try {
+          final session = await ref.read(sesionDaoProvider).getActiveSession();
+          if (session?.clienteId != null) {
+            final sum =
+                await api.getResumenCuenta(resp.factura_local_uuid_activa!);
+            await ref.read(historialDaoProvider).syncExistingOrder(
+                  clienteId: session!.clienteId!,
+                  numeroMesa: mesaId,
+                  facturaUuid: resp.factura_local_uuid_activa!,
+                  subtotal: sum.subtotal_acumulado,
+                  totalImpuestos: sum.total_impuestos_acumulado,
+                  propinaLegal: sum.propina_legal_acumulada,
+                  totalGeneral: sum.total_general_acumulado,
+                  estadoCuenta: sum.estado_cuenta,
+                  items: sum.items_consumidos,
+                );
+          }
+        } catch (e) {
+          // Non-fatal: summary sync failure should not block navigation.
+          debugPrint('[QRScanner] Order summary sync skipped: $e');
+        }
+      }
+
+      // 5. Navigate and show success feedback.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded,
+                    color: Colors.white, size: 18),
+                const SizedBox(width: 10),
+                Text(
+                  'Table $mesaId linked',
+                  style: GoogleFonts.manrope(
+                      fontWeight: FontWeight.w600, color: Colors.white),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF2ECC71),
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+        context.go('/menu');
+      }
     } catch (e) {
+      debugPrint('[QRScanner] Error linking table: $e');
       setState(() => _error = 'Failed to link table. Try again.');
+      // Restart camera so the user can retry.
+      _cameraController.start();
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
-  
-  void _simulateScan() async {
-    setState(() { _loading = true; _error = null; });
-    await Future.delayed(const Duration(milliseconds: 800));
-    try {
-      await _processTableLinked(5);
-      if (mounted) context.go('/menu');
-    } catch (_) {
-      if (mounted) setState(() { _loading = false; _error = 'Failed to scan.'; });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Manual entry fallback (same as original _confirmTable)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  Future<void> _confirmTable() async {
+    final raw = _tableCtrl.text.trim();
+    final mesaId = int.tryParse(raw);
+    if (mesaId == null || mesaId <= 0) {
+      setState(() => _error = 'Enter a valid table number.');
+      return;
     }
+    // Default sucursalId = 1 for manual entry.
+    await _processTableLinked(sucursalId: 1, mesaId: mesaId);
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    setState(() => _error = message);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(message,
+                  style: GoogleFonts.manrope(color: Colors.white)),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Build — visually identical to the original scanner_screen design
+  // ─────────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -113,87 +262,200 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(children: [
+          // ── Header ───────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             child: Center(
-              child: Text('NOCTURNAL', style: GoogleFonts.epilogue(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 2)),
+              child: Text(
+                'NOCTURNAL',
+                style: GoogleFonts.epilogue(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.primary,
+                  letterSpacing: 2,
+                ),
+              ),
             ),
           ),
+
+          // ── Body ─────────────────────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(children: [
                 const SizedBox(height: 16),
+
+                // ── Viewfinder — same visual as original ──────────────────
                 AnimatedBuilder(
                   animation: _anim,
-                  builder: (_, __) => GestureDetector(
-                    onTap: _loading ? null : _simulateScan,
-                    child: Container(
-                      width: double.infinity, height: 280,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        color: Colors.black.withValues(alpha: 0.4),
-                        boxShadow: [BoxShadow(color: AppColors.primaryContainer.withValues(alpha: _anim.value * 0.4), blurRadius: 40, spreadRadius: 2)],
-                      ),
+                  builder: (_, __) => Container(
+                    width: double.infinity,
+                    height: 280,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      color: Colors.black.withValues(alpha: 0.4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryContainer
+                              .withValues(alpha: _anim.value * 0.4),
+                          blurRadius: 40,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
                       child: Stack(children: [
+                        // ── Live camera feed (background layer) ───────────
+                        MobileScanner(
+                          controller: _cameraController,
+                          onDetect: _onDetect,
+                          errorBuilder: (context, error) => const SizedBox.shrink(),
+                        ),
+
+                        // ── Semi-transparent scrim so icons are visible ───
+                        Container(
+                          color: Colors.black.withValues(alpha: 0.35),
+                        ),
+
+                        // ── Corner brackets (same as original) ────────────
                         _corner(Alignment.topLeft),
                         _corner(Alignment.topRight),
                         _corner(Alignment.bottomLeft),
                         _corner(Alignment.bottomRight),
-                        Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                          _loading
-                              ? const CircularProgressIndicator(color: AppColors.primaryContainer)
-                              : Icon(Icons.qr_code_scanner, size: 64, color: AppColors.primaryContainer.withValues(alpha: 0.85)),
-                          const SizedBox(height: 16),
-                          Text(_loading ? 'Linking Table...' : 'Tap to Scan QR Code', textAlign: TextAlign.center,
-                              style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.onSurface)),
-                          const SizedBox(height: 6),
-                          Text('or enter table number below', style: GoogleFonts.manrope(fontSize: 12, color: AppColors.onSurfaceVariant)),
-                        ])),
+
+                        // ── Centre icon / loader (same as original) ───────
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _loading
+                                  ? const CircularProgressIndicator(
+                                      color: AppColors.primaryContainer)
+                                  : Icon(
+                                      Icons.qr_code_scanner,
+                                      size: 64,
+                                      color: AppColors.primaryContainer
+                                          .withValues(alpha: 0.85),
+                                    ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _loading
+                                    ? 'Linking Table...'
+                                    : 'Tap to Scan QR Code',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.manrope(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'or enter table number below',
+                                style: GoogleFonts.manrope(
+                                  fontSize: 12,
+                                  color: AppColors.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ]),
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 32),
-                Text('── OR ENTER MANUALLY ──', style: GoogleFonts.manrope(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.onSurfaceVariant.withValues(alpha: 0.6))),
+
+                // ── Divider ───────────────────────────────────────────────
+                Text(
+                  '── OR ENTER MANUALLY ──',
+                  style: GoogleFonts.manrope(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2,
+                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
+                  ),
+                ),
+
                 const SizedBox(height: 16),
+
+                // ── Error banner ──────────────────────────────────────────
                 if (_error != null) ...[
                   Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Row(children: [
-                      const Icon(Icons.error_outline, color: AppColors.error, size: 16),
+                      const Icon(Icons.error_outline,
+                          color: AppColors.error, size: 16),
                       const SizedBox(width: 8),
-                      Text(_error!, style: GoogleFonts.manrope(fontSize: 12, color: AppColors.error)),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: GoogleFonts.manrope(
+                              fontSize: 12, color: AppColors.error),
+                        ),
+                      ),
                     ]),
                   ),
                 ],
+
+                // ── Table number field ────────────────────────────────────
                 TextField(
                   controller: _tableCtrl,
                   textAlign: TextAlign.center,
                   keyboardType: TextInputType.number,
-                  style: GoogleFonts.epilogue(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.onSurface, letterSpacing: 8),
+                  style: GoogleFonts.epilogue(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.onSurface,
+                    letterSpacing: 8,
+                  ),
                   decoration: InputDecoration(
                     hintText: '05',
-                    hintStyle: GoogleFonts.epilogue(fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: 8, color: AppColors.outlineVariant.withValues(alpha: 0.3)),
+                    hintStyle: GoogleFonts.epilogue(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 8,
+                      color: AppColors.outlineVariant.withValues(alpha: 0.3),
+                    ),
                   ),
                 ),
+
                 const SizedBox(height: 20),
+
+                // ── Confirm button ────────────────────────────────────────
                 SizedBox(
-                  width: double.infinity, height: 56,
+                  width: double.infinity,
+                  height: 56,
                   child: ElevatedButton(
                     onPressed: _loading ? null : _confirmTable,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryContainer,
                       foregroundColor: AppColors.onPrimaryContainer,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
                     ),
                     child: _loading
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text('CONFIRM TABLE', style: GoogleFonts.epilogue(fontWeight: FontWeight.w800, letterSpacing: 3)),
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : Text(
+                            'CONFIRM TABLE',
+                            style: GoogleFonts.epilogue(
+                                fontWeight: FontWeight.w800, letterSpacing: 3),
+                          ),
                   ),
                 ),
+
                 const SizedBox(height: 120),
               ]),
             ),
@@ -203,26 +465,46 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Corner bracket widget (identical to original)
+  // ─────────────────────────────────────────────────────────────────────────
+
   Widget _corner(Alignment alignment) {
-    final isTop = alignment == Alignment.topLeft || alignment == Alignment.topRight;
-    final isLeft = alignment == Alignment.topLeft || alignment == Alignment.bottomLeft;
+    final isTop =
+        alignment == Alignment.topLeft || alignment == Alignment.topRight;
+    final isLeft =
+        alignment == Alignment.topLeft || alignment == Alignment.bottomLeft;
     return Positioned(
-      top: isTop ? 0 : null, bottom: isTop ? null : 0,
-      left: isLeft ? 0 : null, right: isLeft ? null : 0,
+      top: isTop ? 0 : null,
+      bottom: isTop ? null : 0,
+      left: isLeft ? 0 : null,
+      right: isLeft ? null : 0,
       child: Container(
-        width: 44, height: 44,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
           border: Border(
-            top: isTop ? const BorderSide(color: AppColors.primaryContainer, width: 4) : BorderSide.none,
-            bottom: !isTop ? const BorderSide(color: AppColors.primaryContainer, width: 4) : BorderSide.none,
-            left: isLeft ? const BorderSide(color: AppColors.primaryContainer, width: 4) : BorderSide.none,
-            right: !isLeft ? const BorderSide(color: AppColors.primaryContainer, width: 4) : BorderSide.none,
+            top: isTop
+                ? const BorderSide(color: AppColors.primaryContainer, width: 4)
+                : BorderSide.none,
+            bottom: !isTop
+                ? const BorderSide(color: AppColors.primaryContainer, width: 4)
+                : BorderSide.none,
+            left: isLeft
+                ? const BorderSide(color: AppColors.primaryContainer, width: 4)
+                : BorderSide.none,
+            right: !isLeft
+                ? const BorderSide(color: AppColors.primaryContainer, width: 4)
+                : BorderSide.none,
           ),
           borderRadius: BorderRadius.only(
             topLeft: isTop && isLeft ? const Radius.circular(14) : Radius.zero,
-            topRight: isTop && !isLeft ? const Radius.circular(14) : Radius.zero,
-            bottomLeft: !isTop && isLeft ? const Radius.circular(14) : Radius.zero,
-            bottomRight: !isTop && !isLeft ? const Radius.circular(14) : Radius.zero,
+            topRight:
+                isTop && !isLeft ? const Radius.circular(14) : Radius.zero,
+            bottomLeft:
+                !isTop && isLeft ? const Radius.circular(14) : Radius.zero,
+            bottomRight:
+                !isTop && !isLeft ? const Radius.circular(14) : Radius.zero,
           ),
         ),
       ),

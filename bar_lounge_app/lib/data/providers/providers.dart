@@ -103,3 +103,46 @@ final allOrderDetailsProvider = StreamProvider<List<HistorialDetalle>>((ref) {
   return ref.watch(historialDaoProvider).watchAllOrderDetails(clienteId: session?.clienteId);
 });
 
+// ---------------------------------------------------------------------------
+// SESSION PROVIDER — Stores the active QR scan result (sucursalId + mesaId)
+// ---------------------------------------------------------------------------
+
+/// Immutable state for the active QR session.
+class SessionState {
+  final int sucursalId;
+  final int mesaId;
+
+  const SessionState({required this.sucursalId, required this.mesaId});
+
+  /// Returns a copy with updated fields.
+  SessionState copyWith({int? sucursalId, int? mesaId}) => SessionState(
+        sucursalId: sucursalId ?? this.sucursalId,
+        mesaId: mesaId ?? this.mesaId,
+      );
+
+  @override
+  String toString() => 'SessionState(sucursalId: $sucursalId, mesaId: $mesaId)';
+}
+
+/// [SessionNotifier] manages the current table/branch binding obtained via QR.
+class SessionNotifier extends Notifier<SessionState> {
+  @override
+  SessionState build() => const SessionState(sucursalId: 0, mesaId: 0);
+
+  /// Updates both IDs after a successful QR scan.
+  void setSession({required int sucursalId, required int mesaId}) {
+    state = state.copyWith(sucursalId: sucursalId, mesaId: mesaId);
+  }
+
+  /// Resets the session (e.g. after payment or logout).
+  void clearSession() {
+    state = const SessionState(sucursalId: 0, mesaId: 0);
+  }
+}
+
+/// Global provider — use [ref.read(sessionProvider.notifier).setSession(...)]
+/// from the QR scanner after a successful scan.
+final sessionProvider = NotifierProvider<SessionNotifier, SessionState>(
+  SessionNotifier.new,
+);
+
