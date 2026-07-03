@@ -1,0 +1,359 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Nocturnal - Help &amp; Support</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@600;700;800&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-container": "#ff6b00",
+                      "outline-variant": "#5a4136",
+                      "surface-container": "#1c2026",
+                      "primary-fixed-dim": "#ffb693",
+                      "surface-dim": "#10141a",
+                      "outline": "#a98a7d",
+                      "on-tertiary-container": "#472a18",
+                      "tertiary-fixed": "#ffdbc8",
+                      "surface-tint": "#ffb693",
+                      "primary-fixed": "#ffdbcc",
+                      "secondary-container": "#42474f",
+                      "primary": "#ffb693",
+                      "tertiary": "#ecbda2",
+                      "on-background": "#dfe2eb",
+                      "on-tertiary-fixed-variant": "#603f2b",
+                      "on-primary-fixed-variant": "#7a3000",
+                      "on-primary-fixed": "#351000",
+                      "surface-container-low": "#181c22",
+                      "error": "#ffb4ab",
+                      "on-tertiary-fixed": "#2e1505",
+                      "secondary-fixed-dim": "#c2c7d0",
+                      "on-secondary": "#2c3138",
+                      "tertiary-fixed-dim": "#ecbda2",
+                      "error-container": "#93000a",
+                      "background": "#10141a",
+                      "inverse-primary": "#a04100",
+                      "on-error-container": "#ffdad6",
+                      "inverse-surface": "#dfe2eb",
+                      "surface-container-lowest": "#0a0e14",
+                      "on-surface-variant": "#e2bfb0",
+                      "inverse-on-surface": "#2d3137",
+                      "on-surface": "#dfe2eb",
+                      "on-primary-container": "#572000",
+                      "on-secondary-container": "#b1b5bf",
+                      "surface-bright": "#353940",
+                      "secondary-fixed": "#dee2ec",
+                      "on-tertiary": "#462917",
+                      "surface-container-highest": "#31353c",
+                      "surface-variant": "#31353c",
+                      "surface": "#10141a",
+                      "secondary": "#c2c7d0",
+                      "surface-container-high": "#262a31",
+                      "on-error": "#690005",
+                      "on-secondary-fixed": "#171c23",
+                      "on-secondary-fixed-variant": "#42474f",
+                      "on-primary": "#561f00",
+                      "tertiary-container": "#ba9078"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "card-padding": "20px",
+                      "container-margin": "20px",
+                      "gutter": "16px",
+                      "section-padding": "32px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "label-md": [
+                              "Manrope"
+                      ],
+                      "display-lg": [
+                              "Epilogue"
+                      ],
+                      "body-sm": [
+                              "Manrope"
+                      ],
+                      "body-md": [
+                              "Manrope"
+                      ],
+                      "body-lg": [
+                              "Manrope"
+                      ],
+                      "headline-lg": [
+                              "Epilogue"
+                      ],
+                      "headline-sm": [
+                              "Epilogue"
+                      ],
+                      "label-lg": [
+                              "Manrope"
+                      ],
+                      "headline-lg-mobile": [
+                              "Epilogue"
+                      ],
+                      "headline-md": [
+                              "Epilogue"
+                      ]
+              },
+              "fontSize": {
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "800"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-sm": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #0D1117;
+            color: #dfe2eb;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .glass-panel {
+            background: rgba(26, 31, 38, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(255, 107, 0, 0.15);
+        }
+        
+        .glow-effect:hover {
+            box-shadow: 0 0 30px rgba(255, 107, 0, 0.3);
+        }
+        
+        /* Custom scrollbar for web */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0D1117;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1A1F26;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #31353c;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface-dim min-h-screen flex flex-col pt-16 pb-24 relative overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface-dim/80 backdrop-blur-xl dark:bg-surface-dim/80 border-b border-white/10 shadow-sm flex items-center justify-between px-card-padding h-16 transition-colors hover:bg-surface-container-highest/50">
+<button class="text-on-surface-variant dark:text-on-surface-variant active:scale-95 duration-200 p-2 -ml-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm-mobile md:text-headline-sm text-primary-container dark:text-primary-container absolute left-1/2 transform -translate-x-1/2" style="color: rgb(255, 182, 147);">Nocturnal</h1>
+<div class="w-10"></div> <!-- Placeholder for balance -->
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-2xl mx-auto px-container-margin py-section-padding flex flex-col gap-6 relative z-10">
+<section class="mb-4">
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">Help &amp; Support</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">How can our digital sommelier assist you tonight?</p>
+</section>
+<!-- Live Concierge Chat -->
+<a class="glass-panel rounded-xl p-6 flex flex-col gap-4 relative overflow-hidden group glow-effect transition-all duration-300" href="#">
+<div class="absolute -right-10 -top-10 w-32 h-32 bg-primary-container/10 rounded-full blur-2xl group-hover:bg-primary-container/20 transition-all duration-500"></div>
+<div class="flex items-start justify-between z-10">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-primary-container" data-icon="support_agent" data-weight="fill" style="font-variation-settings: 'FILL' 1;">support_agent</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Live Concierge</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Available 24/7 for VIP assistance</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary-container transition-colors duration-300 transform group-hover:translate-x-1">chevron_right</span>
+</div>
+<div class="flex items-center gap-2 z-10 mt-2">
+<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Online Now</span>
+</div>
+</a>
+<!-- FAQ Section -->
+<div class="mt-4">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-4 px-2">Frequently Asked Questions</h3>
+<div class="flex flex-col gap-3">
+<!-- FAQ Item 1 -->
+<div class="glass-panel rounded-lg overflow-hidden transition-all duration-300">
+<button class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors focus:outline-none">
+<span class="font-body-md text-body-md text-on-surface">How do I split a bill with friends?</span>
+<span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+</button>
+</div>
+<!-- FAQ Item 2 -->
+<div class="glass-panel rounded-lg overflow-hidden transition-all duration-300">
+<button class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors focus:outline-none">
+<span class="font-body-md text-body-md text-on-surface">What is the dress code policy?</span>
+<span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+</button>
+</div>
+<!-- FAQ Item 3 -->
+<div class="glass-panel rounded-lg overflow-hidden transition-all duration-300">
+<button class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors focus:outline-none">
+<span class="font-body-md text-body-md text-on-surface">Can I reserve a specific table?</span>
+<span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+</button>
+</div>
+<a class="text-center mt-2 py-2 font-label-md text-label-md text-primary-container hover:text-primary transition-colors inline-block uppercase tracking-wider" href="#">
+                    View all FAQs
+                </a>
+</div>
+</div>
+<!-- Contact Email -->
+<a class="glass-panel rounded-xl p-5 flex items-center justify-between group hover:bg-white/5 transition-colors duration-300 mt-2" href="mailto:support@nocturnal.app">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-white/5 group-hover:border-primary-container/30 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary-container transition-colors" data-icon="mail">mail</span>
+</div>
+<div>
+<h3 class="font-body-md text-body-md text-on-surface">Email Support</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">support@nocturnal.app</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary-container transition-colors transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 duration-300">open_in_new</span>
+</a>
+<!-- App Version Info -->
+<div class="mt-8 flex flex-col items-center justify-center gap-2 opacity-50 pb-8">
+<span class="material-symbols-outlined text-3xl" data-icon="nightlife">nightlife</span>
+<p class="font-label-md text-label-md tracking-widest text-on-surface-variant uppercase">Nocturnal</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Version 2.4.1 (Build 4092)</p>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-surface-container-low/90 backdrop-blur-2xl dark:bg-surface-container-low/90 border-t border-white/5 shadow-[0_-4px_20px_rgba(255,107,0,0.15)] flex justify-around items-center h-20 px-base pb-safe md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:opacity-100 transition-opacity active:scale-90 duration-150 p-2" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="nightlife">nightlife</span>
+<span class="font-label-md text-label-md">Lounge</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:opacity-100 transition-opacity active:scale-90 duration-150 p-2" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="qr_code_scanner">qr_code_scanner</span>
+<span class="font-label-md text-label-md">Scanner</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:opacity-100 transition-opacity active:scale-90 duration-150 p-2" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="receipt_long">receipt_long</span>
+<span class="font-label-md text-label-md">Orders</span>
+</a>
+<!-- Account is considered active as Help & Support falls under Account/Profile context -->
+<a class="flex flex-col items-center justify-center text-primary-container dark:text-primary-container font-bold scale-110 transition-transform hover:opacity-100 active:scale-90 duration-150 p-2 relative" href="#">
+<div class="absolute -bottom-2 w-1 h-1 rounded-full bg-primary-container shadow-[0_0_15px_rgba(255,107,0,0.8)]"></div>
+<span class="material-symbols-outlined mb-1" data-icon="person" data-weight="fill" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-md text-label-md">Account</span>
+</a>
+</nav>
+<!-- Web Side Nav (hidden on mobile) -->
+<nav class="hidden md:flex flex-col fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-surface-container-low/90 backdrop-blur-2xl border-r border-white/5 p-6 gap-4 z-40">
+<div class="font-headline-sm text-headline-sm text-on-surface-variant mb-4 pl-2 opacity-50 uppercase tracking-widest">Navigation</div>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="nightlife">nightlife</span>
+<span class="font-body-md text-body-md">Lounge</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="qr_code_scanner">qr_code_scanner</span>
+<span class="font-body-md text-body-md">Scanner</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-body-md text-body-md">Orders</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg bg-primary-container/10 text-primary-container border border-primary-container/20 transition-all shadow-[0_0_15px_rgba(255,107,0,0.1)]" href="#">
+<span class="material-symbols-outlined" data-icon="person" data-weight="fill" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-body-md text-body-md font-bold">Account</span>
+</a>
+</nav>
+
+
+</body></html>

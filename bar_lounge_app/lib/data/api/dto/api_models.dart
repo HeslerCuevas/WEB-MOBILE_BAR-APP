@@ -1,3 +1,19 @@
+// ignore_for_file: non_constant_identifier_names
+
+double _parseDouble(dynamic v, {double defaultValue = 0.0}) {
+  if (v == null) return defaultValue;
+  if (v is num) return v.toDouble();
+  if (v is String) return double.tryParse(v) ?? defaultValue;
+  return defaultValue;
+}
+
+double? _parseNullableDouble(dynamic v) {
+  if (v == null) return null;
+  if (v is num) return v.toDouble();
+  if (v is String) return double.tryParse(v);
+  return null;
+}
+
 class RegistroRequest {
 
   final String nombre_completo;
@@ -126,10 +142,67 @@ class ProductoDto {
         sku: json['sku'] as String? ?? '',
         nombre: json['nombre'] as String,
         descripcion: json['descripcion'] as String? ?? '',
-        precio_base: (json['precio_base'] as num?)?.toDouble() ?? 0.0,
-        tasa_impuesto: (json['tasa_impuesto'] as num?)?.toDouble() ?? 0.18,
+        precio_base: _parseDouble(json['precio_base']),
+        tasa_impuesto: _parseDouble(json['tasa_impuesto'], defaultValue: 0.18),
         esta_disponible: json['esta_disponible'] as bool? ?? true,
         imagen_url: json['imagen_url'] as String? ?? '',
+      );
+}
+
+class PromocionDto {
+  final int id;
+  final String nombre;
+  final String? descripcion;
+  final String tipo_descuento;
+  final double valor;
+  final String fecha_inicio;
+  final String? fecha_fin;
+  final bool activo;
+  final int prioridad;
+  final String aplica_a;
+  final bool aplica_happy_hour;
+  final String? hora_inicio_hh;
+  final String? hora_fin_hh;
+  final List<int> producto_ids;
+  final List<int> categoria_ids;
+  final double? precio_minimo_final;
+
+  PromocionDto({
+    required this.id,
+    required this.nombre,
+    this.descripcion,
+    required this.tipo_descuento,
+    required this.valor,
+    required this.fecha_inicio,
+    this.fecha_fin,
+    required this.activo,
+    required this.prioridad,
+    required this.aplica_a,
+    required this.aplica_happy_hour,
+    this.hora_inicio_hh,
+    this.hora_fin_hh,
+    required this.producto_ids,
+    required this.categoria_ids,
+    this.precio_minimo_final,
+  });
+
+  factory PromocionDto.fromJson(Map<String, dynamic> json) => PromocionDto(
+        id: json['id'] as int,
+        nombre: json['nombre'] as String,
+        descripcion: json['descripcion'] as String?,
+        tipo_descuento: json['tipo_descuento'] as String,
+        valor: _parseDouble(json['valor']),
+        fecha_inicio: json['fecha_inicio'] as String,
+        fecha_fin: json['fecha_fin'] as String?,
+        activo: json['activo'] as bool? ?? true,
+        prioridad: json['prioridad'] as int? ?? 0,
+        aplica_a: json['aplica_a'] as String? ?? 'TODOS',
+        aplica_happy_hour: json['aplica_happy_hour'] as bool? ?? false,
+        hora_inicio_hh: json['hora_inicio_hh'] as String?,
+        hora_fin_hh: json['hora_fin_hh'] as String?,
+        producto_ids: (json['producto_ids'] as List?)?.map((e) => e as int).toList() ?? [],
+        categoria_ids: (json['categoria_ids'] as List?)?.map((e) => e as int).toList() ?? [],
+        precio_minimo_final: _parseNullableDouble(json['precio_minimo_final']),
       );
 }
 
@@ -325,10 +398,10 @@ class DetallePedidoResponse {
         id: json['id'] as int,
         producto_id: json['producto_id'] as int,
         cantidad: json['cantidad'] as int,
-        precio_unitario_historico: (json['precio_unitario_historico'] as num).toDouble(),
-        impuesto_historico: (json['impuesto_historico'] as num).toDouble(),
-        monto_impuesto: (json['monto_impuesto'] as num).toDouble(),
-        subtotal_linea: (json['subtotal_linea'] as num).toDouble(),
+        precio_unitario_historico: _parseDouble(json['precio_unitario_historico']),
+        impuesto_historico: _parseDouble(json['impuesto_historico']),
+        monto_impuesto: _parseDouble(json['monto_impuesto']),
+        subtotal_linea: _parseDouble(json['subtotal_linea']),
         detalle_local_uuid: json['detalle_local_uuid'] as String?,
       );
 }
@@ -477,9 +550,9 @@ class AgregarPedidoResponse {
   factory AgregarPedidoResponse.fromJson(Map<String, dynamic> json) =>
       AgregarPedidoResponse(
         mensaje: json['mensaje'] as String? ?? 'Añadido a la cuenta',
-        nuevo_subtotal: (json['nuevo_subtotal'] as num?)?.toDouble(),
-        nuevo_total_impuestos: (json['nuevo_total_impuestos'] as num?)?.toDouble(),
-        nuevo_total_general: (json['nuevo_total_general'] as num?)?.toDouble(),
+        nuevo_subtotal: _parseNullableDouble(json['nuevo_subtotal']),
+        nuevo_total_impuestos: _parseNullableDouble(json['nuevo_total_impuestos']),
+        nuevo_total_general: _parseNullableDouble(json['nuevo_total_general']),
       );
 }
 
@@ -513,16 +586,10 @@ class ItemResumen {
   });
 
   factory ItemResumen.fromJson(Map<String, dynamic> json) {
-    double parseDouble(dynamic value) {
-      if (value == null) return 0.0;
-      if (value is num) return value.toDouble();
-      if (value is String) return double.tryParse(value) ?? 0.0;
-      return 0.0;
-    }
     return ItemResumen(
       producto_nombre: json['producto_nombre'] as String? ?? 'Desconocido',
       cantidad: json['cantidad'] as int? ?? 1,
-      subtotal_linea: parseDouble(json['subtotal_linea']),
+      subtotal_linea: _parseDouble(json['subtotal_linea']),
       estado_preparacion: json['estado_preparacion'] as String? ?? 'PENDIENTE',
     );
   }
@@ -550,20 +617,14 @@ class ResumenCuentaResponse {
   });
 
   factory ResumenCuentaResponse.fromJson(Map<String, dynamic> json) {
-    double parseDouble(dynamic value) {
-      if (value == null) return 0.0;
-      if (value is num) return value.toDouble();
-      if (value is String) return double.tryParse(value) ?? 0.0;
-      return 0.0;
-    }
     return ResumenCuentaResponse(
       factura_local_uuid: json['factura_local_uuid'] as String,
       estado_cuenta: json['estado_cuenta'] as String,
-      subtotal_acumulado: parseDouble(json['subtotal_acumulado']),
-      total_impuestos_acumulado: parseDouble(json['total_impuestos_acumulado']),
-      propina_legal_acumulada: parseDouble(json['propina_legal_acumulada']),
-      propina_extra_acumulada: parseDouble(json['propina_extra_acumulada']),
-      total_general_acumulado: parseDouble(json['total_general_acumulado']),
+      subtotal_acumulado: _parseDouble(json['subtotal_acumulado']),
+      total_impuestos_acumulado: _parseDouble(json['total_impuestos_acumulado']),
+      propina_legal_acumulada: _parseDouble(json['propina_legal_acumulada']),
+      propina_extra_acumulada: _parseDouble(json['propina_extra_acumulada']),
+      total_general_acumulado: _parseDouble(json['total_general_acumulado']),
       items_consumidos: (json['items_consumidos'] as List?)
               ?.map((e) => ItemResumen.fromJson(e as Map<String, dynamic>))
               .toList() ?? [],

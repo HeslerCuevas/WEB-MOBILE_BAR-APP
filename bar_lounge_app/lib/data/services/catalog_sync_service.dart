@@ -6,6 +6,7 @@ import '../api/dto/api_models.dart';
 import '../database/daos/catalogo_dao.dart';
 import '../database/app_database.dart';
 import '../mappers/api_to_drift_mapper.dart';
+import '../database/daos/promociones_dao.dart';
 
 List<CategoriaDto> _parseCategorias(List<dynamic> data) {
   return data.map((e) => CategoriaDto.fromJson(e as Map<String, dynamic>)).toList();
@@ -15,14 +16,19 @@ List<ProductoDto> _parseProductos(List<dynamic> data) {
   return data.map((e) => ProductoDto.fromJson(e as Map<String, dynamic>)).toList();
 }
 
+List<PromocionDto> _parsePromociones(List<dynamic> data) {
+  return data.map((e) => PromocionDto.fromJson(e as Map<String, dynamic>)).toList();
+}
+
 class CatalogSyncService {
   final ApiService _api;
   final CatalogoDao _catalogoDao;
+  final PromocionesDao _promocionesDao;
   int? _lastSyncUnix;
   Timer? _syncTimer;
   bool _isSyncing = false;
 
-  CatalogSyncService(this._api, this._catalogoDao);
+  CatalogSyncService(this._api, this._catalogoDao, this._promocionesDao);
 
   void startPeriodicSync() {
     syncCatalog();
@@ -51,6 +57,20 @@ class CatalogSyncService {
       final categorias = await compute(_parseCategorias, rawCats);
 
       final catCompanions = ApiToDriftMapper.categoriasToCompanions(categorias);
+
+      final rawPromos = await _api.getPromocionesActivas();
+      final promociones = await compute(_parsePromociones, rawPromos);
+      final promosCompanions = ApiToDriftMapper.promocionesToCompanions(promociones);
+      
+      final prodRels = <PromocionesProductosCacheCompanion>[];
+      final catRels = <PromocionesCategoriasCacheCompanion>[];
+      for (final p in promociones) {
+        prodRels.addAll(ApiToDriftMapper.promocionProductosToCompanions(p));
+        catRels.addAll(ApiToDriftMapper.promocionCategoriasToCompanions(p));
+      }
+      
+      // We always replace promotions to ensure accurate evaluation
+      await _promocionesDao.replaceAllPromotions(promosCompanions, prodRels, catRels);
 
       if (effectiveTimestamp == null) {
 
@@ -103,6 +123,10 @@ class CatalogSyncService {
         }
         debugPrint('[SYNC] Catalog synced: ${categorias.length} categories incrementally updating.');
       }
+      
+      // Only update timestamp if everything succeeded
+      _lastSyncUnix = currentUnix;
+      
     } on DioException catch (dioErr) {
       debugPrint('[SYNC] Catalog API sync skipped (offline) - DioException: ${dioErr.message}');
 
@@ -110,8 +134,6 @@ class CatalogSyncService {
       debugPrint('[SYNC] Catalog sync threw unexpected error: $e');
 
     } finally {
-      _lastSyncUnix = currentUnix;
-
       _isSyncing = false;
     }
   }

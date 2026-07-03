@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import, avoid_print
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bar_lounge_app/data/database/app_database.dart';
 import 'package:drift/native.dart'; // Asegúrate de tener drift y sqlite3_flutter_libs

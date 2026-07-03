@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/utils/money.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -191,11 +192,11 @@ class _ReceiptBody extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   child: Column(
                     children: [
-                      _totalRow('Subtotal', '\$${order.subtotal.toStringAsFixed(2)}'),
+                      _totalRow('Subtotal', fmtMoney(order.subtotal)),
                       const SizedBox(height: 8),
-                      _totalRow('ITBIS (18%)', '\$${order.totalImpuestos.toStringAsFixed(2)}'),
+                      _totalRow('ITBIS (18%)', fmtMoney(order.totalImpuestos)),
                       const SizedBox(height: 8),
-                      _totalRow('Legal Tip (10%)', '\$${order.propinaLegal.toStringAsFixed(2)}'),
+                      _totalRow('Legal Tip (10%)', fmtMoney(order.propinaLegal)),
                       Builder(builder: (context) {
                         final tip = _resolvedExtraTip();
                         if (tip <= 0) return const SizedBox.shrink();

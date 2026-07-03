@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:io';
 
 import '../api_client.dart';
@@ -83,6 +85,11 @@ class ApiService {
       '/productos/por-categoria/$categoriaId',
       queryParameters: lastSyncTimestamp != null ? {'last_sync': lastSyncTimestamp} : null,
     );
+    return response.data as List;
+  }
+
+  Future<List<dynamic>> getPromocionesActivas() async {
+    final response = await _client.dio.get('/promociones/');
     return response.data as List;
   }
 

@@ -3,6 +3,7 @@ import '../database/app_database.dart';
 import '../api/api_client.dart';
 import '../api/services/api_service.dart';
 import '../services/catalog_sync_service.dart';
+import '../services/promotions_eval_service.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
@@ -31,13 +32,24 @@ final carritoDaoProvider =
 final historialDaoProvider =
     Provider((ref) => ref.watch(databaseProvider).historialDao);
 
+final promocionesDaoProvider =
+    Provider((ref) => ref.watch(databaseProvider).promocionesDao);
+
+final promotionsEvalServiceProvider = Provider<PromotionsEvalService>((ref) {
+  return PromotionsEvalService(ref.watch(promocionesDaoProvider));
+});
+
 final catalogSyncProvider = Provider<CatalogSyncService>((ref) {
 
   return CatalogSyncService(
     ref.watch(apiServiceProvider),
     ref.watch(catalogoDaoProvider),
+    ref.watch(promocionesDaoProvider),
   );
 });
+
+final activePromotionsProvider = StreamProvider(
+    (ref) => ref.watch(promocionesDaoProvider).watchActivePromotions());
 
 final activeSessionProvider = StreamProvider(
     (ref) => ref.watch(sesionDaoProvider).watchActiveSession());
@@ -101,6 +113,42 @@ final allOrderDetailsProvider = StreamProvider<List<HistorialDetalle>>((ref) {
     orElse: () => null,
   );
   return ref.watch(historialDaoProvider).watchAllOrderDetails(clienteId: session?.clienteId);
+});
+
+// ---------------------------------------------------------------------------
+// BEST-PROMO PER-PRODUCT — Resolves all promo types (TODOS + PRODUCTOS + CATEGORIAS)
+// ---------------------------------------------------------------------------
+
+/// Unique key that identifies a product by both its id and its category.
+class ProductPromoKey {
+  final int productId;
+  final int categoriaId;
+  const ProductPromoKey(this.productId, this.categoriaId);
+
+  @override
+  bool operator ==(Object other) =>
+      other is ProductPromoKey &&
+      other.productId == productId &&
+      other.categoriaId == categoriaId;
+
+  @override
+  int get hashCode => Object.hash(productId, categoriaId);
+}
+
+/// Async provider that resolves the best promotion for a single product,
+/// including PRODUCTOS and CATEGORIAS scoped promos (requires DB queries).
+final productBestPromoProvider =
+    FutureProvider.family<PromocionesCacheData?, ProductPromoKey>((ref, key) {
+  return ref
+      .watch(promotionsEvalServiceProvider)
+      .getBestPromotion(key.productId, key.categoriaId);
+});
+
+final categoryBestPromoProvider =
+    FutureProvider.family<PromocionesCacheData?, int>((ref, categoriaId) {
+  return ref
+      .watch(promotionsEvalServiceProvider)
+      .getBestPromoForCategory(categoriaId);
 });
 
 // ---------------------------------------------------------------------------

@@ -5,6 +5,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'app.dart';
 import 'data/services/notification_service.dart';
+import 'core/utils/timezone.dart';
+
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -12,8 +14,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await NotificationService.initialize();
   await NotificationService.handleBackgroundMessage(message);
 }
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  TimezoneUtil.initialize();
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,

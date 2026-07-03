@@ -45,6 +45,15 @@ class $SesionClienteTable extends SesionCliente
     requiredDuringInsert: false,
     defaultValue: const Constant('Guest'),
   );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _clienteIdMeta = const VerificationMeta(
     'clienteId',
   );
@@ -99,6 +108,7 @@ class $SesionClienteTable extends SesionCliente
     id,
     sessionToken,
     nombreDisplay,
+    email,
     clienteId,
     esInvitado,
     creadoEn,
@@ -135,6 +145,12 @@ class $SesionClienteTable extends SesionCliente
           data['nombre_display']!,
           _nombreDisplayMeta,
         ),
+      );
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
       );
     }
     if (data.containsKey('cliente_id')) {
@@ -184,6 +200,10 @@ class $SesionClienteTable extends SesionCliente
             DriftSqlType.string,
             data['${effectivePrefix}nombre_display'],
           )!,
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
       clienteId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}cliente_id'],
@@ -216,6 +236,7 @@ class SesionClienteData extends DataClass
   final int id;
   final String? sessionToken;
   final String nombreDisplay;
+  final String? email;
   final int? clienteId;
   final bool esInvitado;
   final DateTime creadoEn;
@@ -224,6 +245,7 @@ class SesionClienteData extends DataClass
     required this.id,
     this.sessionToken,
     required this.nombreDisplay,
+    this.email,
     this.clienteId,
     required this.esInvitado,
     required this.creadoEn,
@@ -237,6 +259,9 @@ class SesionClienteData extends DataClass
       map['session_token'] = Variable<String>(sessionToken);
     }
     map['nombre_display'] = Variable<String>(nombreDisplay);
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
     if (!nullToAbsent || clienteId != null) {
       map['cliente_id'] = Variable<int>(clienteId);
     }
@@ -256,6 +281,8 @@ class SesionClienteData extends DataClass
               ? const Value.absent()
               : Value(sessionToken),
       nombreDisplay: Value(nombreDisplay),
+      email:
+          email == null && nullToAbsent ? const Value.absent() : Value(email),
       clienteId:
           clienteId == null && nullToAbsent
               ? const Value.absent()
@@ -278,6 +305,7 @@ class SesionClienteData extends DataClass
       id: serializer.fromJson<int>(json['id']),
       sessionToken: serializer.fromJson<String?>(json['sessionToken']),
       nombreDisplay: serializer.fromJson<String>(json['nombreDisplay']),
+      email: serializer.fromJson<String?>(json['email']),
       clienteId: serializer.fromJson<int?>(json['clienteId']),
       esInvitado: serializer.fromJson<bool>(json['esInvitado']),
       creadoEn: serializer.fromJson<DateTime>(json['creadoEn']),
@@ -291,6 +319,7 @@ class SesionClienteData extends DataClass
       'id': serializer.toJson<int>(id),
       'sessionToken': serializer.toJson<String?>(sessionToken),
       'nombreDisplay': serializer.toJson<String>(nombreDisplay),
+      'email': serializer.toJson<String?>(email),
       'clienteId': serializer.toJson<int?>(clienteId),
       'esInvitado': serializer.toJson<bool>(esInvitado),
       'creadoEn': serializer.toJson<DateTime>(creadoEn),
@@ -302,6 +331,7 @@ class SesionClienteData extends DataClass
     int? id,
     Value<String?> sessionToken = const Value.absent(),
     String? nombreDisplay,
+    Value<String?> email = const Value.absent(),
     Value<int?> clienteId = const Value.absent(),
     bool? esInvitado,
     DateTime? creadoEn,
@@ -310,6 +340,7 @@ class SesionClienteData extends DataClass
     id: id ?? this.id,
     sessionToken: sessionToken.present ? sessionToken.value : this.sessionToken,
     nombreDisplay: nombreDisplay ?? this.nombreDisplay,
+    email: email.present ? email.value : this.email,
     clienteId: clienteId.present ? clienteId.value : this.clienteId,
     esInvitado: esInvitado ?? this.esInvitado,
     creadoEn: creadoEn ?? this.creadoEn,
@@ -326,6 +357,7 @@ class SesionClienteData extends DataClass
           data.nombreDisplay.present
               ? data.nombreDisplay.value
               : this.nombreDisplay,
+      email: data.email.present ? data.email.value : this.email,
       clienteId: data.clienteId.present ? data.clienteId.value : this.clienteId,
       esInvitado:
           data.esInvitado.present ? data.esInvitado.value : this.esInvitado,
@@ -340,6 +372,7 @@ class SesionClienteData extends DataClass
           ..write('id: $id, ')
           ..write('sessionToken: $sessionToken, ')
           ..write('nombreDisplay: $nombreDisplay, ')
+          ..write('email: $email, ')
           ..write('clienteId: $clienteId, ')
           ..write('esInvitado: $esInvitado, ')
           ..write('creadoEn: $creadoEn, ')
@@ -353,6 +386,7 @@ class SesionClienteData extends DataClass
     id,
     sessionToken,
     nombreDisplay,
+    email,
     clienteId,
     esInvitado,
     creadoEn,
@@ -365,6 +399,7 @@ class SesionClienteData extends DataClass
           other.id == this.id &&
           other.sessionToken == this.sessionToken &&
           other.nombreDisplay == this.nombreDisplay &&
+          other.email == this.email &&
           other.clienteId == this.clienteId &&
           other.esInvitado == this.esInvitado &&
           other.creadoEn == this.creadoEn &&
@@ -375,6 +410,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
   final Value<int> id;
   final Value<String?> sessionToken;
   final Value<String> nombreDisplay;
+  final Value<String?> email;
   final Value<int?> clienteId;
   final Value<bool> esInvitado;
   final Value<DateTime> creadoEn;
@@ -383,6 +419,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
     this.id = const Value.absent(),
     this.sessionToken = const Value.absent(),
     this.nombreDisplay = const Value.absent(),
+    this.email = const Value.absent(),
     this.clienteId = const Value.absent(),
     this.esInvitado = const Value.absent(),
     this.creadoEn = const Value.absent(),
@@ -392,6 +429,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
     this.id = const Value.absent(),
     this.sessionToken = const Value.absent(),
     this.nombreDisplay = const Value.absent(),
+    this.email = const Value.absent(),
     this.clienteId = const Value.absent(),
     this.esInvitado = const Value.absent(),
     this.creadoEn = const Value.absent(),
@@ -401,6 +439,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
     Expression<int>? id,
     Expression<String>? sessionToken,
     Expression<String>? nombreDisplay,
+    Expression<String>? email,
     Expression<int>? clienteId,
     Expression<bool>? esInvitado,
     Expression<DateTime>? creadoEn,
@@ -410,6 +449,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
       if (id != null) 'id': id,
       if (sessionToken != null) 'session_token': sessionToken,
       if (nombreDisplay != null) 'nombre_display': nombreDisplay,
+      if (email != null) 'email': email,
       if (clienteId != null) 'cliente_id': clienteId,
       if (esInvitado != null) 'es_invitado': esInvitado,
       if (creadoEn != null) 'creado_en': creadoEn,
@@ -421,6 +461,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
     Value<int>? id,
     Value<String?>? sessionToken,
     Value<String>? nombreDisplay,
+    Value<String?>? email,
     Value<int?>? clienteId,
     Value<bool>? esInvitado,
     Value<DateTime>? creadoEn,
@@ -430,6 +471,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
       id: id ?? this.id,
       sessionToken: sessionToken ?? this.sessionToken,
       nombreDisplay: nombreDisplay ?? this.nombreDisplay,
+      email: email ?? this.email,
       clienteId: clienteId ?? this.clienteId,
       esInvitado: esInvitado ?? this.esInvitado,
       creadoEn: creadoEn ?? this.creadoEn,
@@ -448,6 +490,9 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
     }
     if (nombreDisplay.present) {
       map['nombre_display'] = Variable<String>(nombreDisplay.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
     }
     if (clienteId.present) {
       map['cliente_id'] = Variable<int>(clienteId.value);
@@ -470,6 +515,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
           ..write('id: $id, ')
           ..write('sessionToken: $sessionToken, ')
           ..write('nombreDisplay: $nombreDisplay, ')
+          ..write('email: $email, ')
           ..write('clienteId: $clienteId, ')
           ..write('esInvitado: $esInvitado, ')
           ..write('creadoEn: $creadoEn, ')
@@ -4024,6 +4070,1397 @@ class HistorialDetallesCompanion extends UpdateCompanion<HistorialDetalle> {
   }
 }
 
+class $PromocionesCacheTable extends PromocionesCache
+    with TableInfo<$PromocionesCacheTable, PromocionesCacheData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PromocionesCacheTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nombreMeta = const VerificationMeta('nombre');
+  @override
+  late final GeneratedColumn<String> nombre = GeneratedColumn<String>(
+    'nombre',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 150),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _descripcionMeta = const VerificationMeta(
+    'descripcion',
+  );
+  @override
+  late final GeneratedColumn<String> descripcion = GeneratedColumn<String>(
+    'descripcion',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 500),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tipoDescuentoMeta = const VerificationMeta(
+    'tipoDescuento',
+  );
+  @override
+  late final GeneratedColumn<String> tipoDescuento = GeneratedColumn<String>(
+    'tipo_descuento',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 20),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valorMeta = const VerificationMeta('valor');
+  @override
+  late final GeneratedColumn<double> valor = GeneratedColumn<double>(
+    'valor',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fechaInicioMeta = const VerificationMeta(
+    'fechaInicio',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fechaInicio = GeneratedColumn<DateTime>(
+    'fecha_inicio',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fechaFinMeta = const VerificationMeta(
+    'fechaFin',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fechaFin = GeneratedColumn<DateTime>(
+    'fecha_fin',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _activoMeta = const VerificationMeta('activo');
+  @override
+  late final GeneratedColumn<bool> activo = GeneratedColumn<bool>(
+    'activo',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("activo" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _prioridadMeta = const VerificationMeta(
+    'prioridad',
+  );
+  @override
+  late final GeneratedColumn<int> prioridad = GeneratedColumn<int>(
+    'prioridad',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _aplicaAMeta = const VerificationMeta(
+    'aplicaA',
+  );
+  @override
+  late final GeneratedColumn<String> aplicaA = GeneratedColumn<String>(
+    'aplica_a',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 20),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('TODOS'),
+  );
+  static const VerificationMeta _aplicaHappyHourMeta = const VerificationMeta(
+    'aplicaHappyHour',
+  );
+  @override
+  late final GeneratedColumn<bool> aplicaHappyHour = GeneratedColumn<bool>(
+    'aplica_happy_hour',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("aplica_happy_hour" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _horaInicioHhMeta = const VerificationMeta(
+    'horaInicioHh',
+  );
+  @override
+  late final GeneratedColumn<String> horaInicioHh = GeneratedColumn<String>(
+    'hora_inicio_hh',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 5),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _horaFinHhMeta = const VerificationMeta(
+    'horaFinHh',
+  );
+  @override
+  late final GeneratedColumn<String> horaFinHh = GeneratedColumn<String>(
+    'hora_fin_hh',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 5),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _precioMinimoFinalMeta = const VerificationMeta(
+    'precioMinimoFinal',
+  );
+  @override
+  late final GeneratedColumn<double> precioMinimoFinal =
+      GeneratedColumn<double>(
+        'precio_minimo_final',
+        aliasedName,
+        true,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    nombre,
+    descripcion,
+    tipoDescuento,
+    valor,
+    fechaInicio,
+    fechaFin,
+    activo,
+    prioridad,
+    aplicaA,
+    aplicaHappyHour,
+    horaInicioHh,
+    horaFinHh,
+    precioMinimoFinal,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'promociones_cache';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PromocionesCacheData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('nombre')) {
+      context.handle(
+        _nombreMeta,
+        nombre.isAcceptableOrUnknown(data['nombre']!, _nombreMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nombreMeta);
+    }
+    if (data.containsKey('descripcion')) {
+      context.handle(
+        _descripcionMeta,
+        descripcion.isAcceptableOrUnknown(
+          data['descripcion']!,
+          _descripcionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tipo_descuento')) {
+      context.handle(
+        _tipoDescuentoMeta,
+        tipoDescuento.isAcceptableOrUnknown(
+          data['tipo_descuento']!,
+          _tipoDescuentoMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_tipoDescuentoMeta);
+    }
+    if (data.containsKey('valor')) {
+      context.handle(
+        _valorMeta,
+        valor.isAcceptableOrUnknown(data['valor']!, _valorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valorMeta);
+    }
+    if (data.containsKey('fecha_inicio')) {
+      context.handle(
+        _fechaInicioMeta,
+        fechaInicio.isAcceptableOrUnknown(
+          data['fecha_inicio']!,
+          _fechaInicioMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fechaInicioMeta);
+    }
+    if (data.containsKey('fecha_fin')) {
+      context.handle(
+        _fechaFinMeta,
+        fechaFin.isAcceptableOrUnknown(data['fecha_fin']!, _fechaFinMeta),
+      );
+    }
+    if (data.containsKey('activo')) {
+      context.handle(
+        _activoMeta,
+        activo.isAcceptableOrUnknown(data['activo']!, _activoMeta),
+      );
+    }
+    if (data.containsKey('prioridad')) {
+      context.handle(
+        _prioridadMeta,
+        prioridad.isAcceptableOrUnknown(data['prioridad']!, _prioridadMeta),
+      );
+    }
+    if (data.containsKey('aplica_a')) {
+      context.handle(
+        _aplicaAMeta,
+        aplicaA.isAcceptableOrUnknown(data['aplica_a']!, _aplicaAMeta),
+      );
+    }
+    if (data.containsKey('aplica_happy_hour')) {
+      context.handle(
+        _aplicaHappyHourMeta,
+        aplicaHappyHour.isAcceptableOrUnknown(
+          data['aplica_happy_hour']!,
+          _aplicaHappyHourMeta,
+        ),
+      );
+    }
+    if (data.containsKey('hora_inicio_hh')) {
+      context.handle(
+        _horaInicioHhMeta,
+        horaInicioHh.isAcceptableOrUnknown(
+          data['hora_inicio_hh']!,
+          _horaInicioHhMeta,
+        ),
+      );
+    }
+    if (data.containsKey('hora_fin_hh')) {
+      context.handle(
+        _horaFinHhMeta,
+        horaFinHh.isAcceptableOrUnknown(data['hora_fin_hh']!, _horaFinHhMeta),
+      );
+    }
+    if (data.containsKey('precio_minimo_final')) {
+      context.handle(
+        _precioMinimoFinalMeta,
+        precioMinimoFinal.isAcceptableOrUnknown(
+          data['precio_minimo_final']!,
+          _precioMinimoFinalMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PromocionesCacheData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PromocionesCacheData(
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      nombre:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}nombre'],
+          )!,
+      descripcion: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}descripcion'],
+      ),
+      tipoDescuento:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}tipo_descuento'],
+          )!,
+      valor:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.double,
+            data['${effectivePrefix}valor'],
+          )!,
+      fechaInicio:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}fecha_inicio'],
+          )!,
+      fechaFin: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fecha_fin'],
+      ),
+      activo:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.bool,
+            data['${effectivePrefix}activo'],
+          )!,
+      prioridad:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}prioridad'],
+          )!,
+      aplicaA:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}aplica_a'],
+          )!,
+      aplicaHappyHour:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.bool,
+            data['${effectivePrefix}aplica_happy_hour'],
+          )!,
+      horaInicioHh: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hora_inicio_hh'],
+      ),
+      horaFinHh: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hora_fin_hh'],
+      ),
+      precioMinimoFinal: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}precio_minimo_final'],
+      ),
+    );
+  }
+
+  @override
+  $PromocionesCacheTable createAlias(String alias) {
+    return $PromocionesCacheTable(attachedDatabase, alias);
+  }
+}
+
+class PromocionesCacheData extends DataClass
+    implements Insertable<PromocionesCacheData> {
+  final int id;
+  final String nombre;
+  final String? descripcion;
+  final String tipoDescuento;
+  final double valor;
+  final DateTime fechaInicio;
+  final DateTime? fechaFin;
+  final bool activo;
+  final int prioridad;
+  final String aplicaA;
+  final bool aplicaHappyHour;
+  final String? horaInicioHh;
+  final String? horaFinHh;
+  final double? precioMinimoFinal;
+  const PromocionesCacheData({
+    required this.id,
+    required this.nombre,
+    this.descripcion,
+    required this.tipoDescuento,
+    required this.valor,
+    required this.fechaInicio,
+    this.fechaFin,
+    required this.activo,
+    required this.prioridad,
+    required this.aplicaA,
+    required this.aplicaHappyHour,
+    this.horaInicioHh,
+    this.horaFinHh,
+    this.precioMinimoFinal,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['nombre'] = Variable<String>(nombre);
+    if (!nullToAbsent || descripcion != null) {
+      map['descripcion'] = Variable<String>(descripcion);
+    }
+    map['tipo_descuento'] = Variable<String>(tipoDescuento);
+    map['valor'] = Variable<double>(valor);
+    map['fecha_inicio'] = Variable<DateTime>(fechaInicio);
+    if (!nullToAbsent || fechaFin != null) {
+      map['fecha_fin'] = Variable<DateTime>(fechaFin);
+    }
+    map['activo'] = Variable<bool>(activo);
+    map['prioridad'] = Variable<int>(prioridad);
+    map['aplica_a'] = Variable<String>(aplicaA);
+    map['aplica_happy_hour'] = Variable<bool>(aplicaHappyHour);
+    if (!nullToAbsent || horaInicioHh != null) {
+      map['hora_inicio_hh'] = Variable<String>(horaInicioHh);
+    }
+    if (!nullToAbsent || horaFinHh != null) {
+      map['hora_fin_hh'] = Variable<String>(horaFinHh);
+    }
+    if (!nullToAbsent || precioMinimoFinal != null) {
+      map['precio_minimo_final'] = Variable<double>(precioMinimoFinal);
+    }
+    return map;
+  }
+
+  PromocionesCacheCompanion toCompanion(bool nullToAbsent) {
+    return PromocionesCacheCompanion(
+      id: Value(id),
+      nombre: Value(nombre),
+      descripcion:
+          descripcion == null && nullToAbsent
+              ? const Value.absent()
+              : Value(descripcion),
+      tipoDescuento: Value(tipoDescuento),
+      valor: Value(valor),
+      fechaInicio: Value(fechaInicio),
+      fechaFin:
+          fechaFin == null && nullToAbsent
+              ? const Value.absent()
+              : Value(fechaFin),
+      activo: Value(activo),
+      prioridad: Value(prioridad),
+      aplicaA: Value(aplicaA),
+      aplicaHappyHour: Value(aplicaHappyHour),
+      horaInicioHh:
+          horaInicioHh == null && nullToAbsent
+              ? const Value.absent()
+              : Value(horaInicioHh),
+      horaFinHh:
+          horaFinHh == null && nullToAbsent
+              ? const Value.absent()
+              : Value(horaFinHh),
+      precioMinimoFinal:
+          precioMinimoFinal == null && nullToAbsent
+              ? const Value.absent()
+              : Value(precioMinimoFinal),
+    );
+  }
+
+  factory PromocionesCacheData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PromocionesCacheData(
+      id: serializer.fromJson<int>(json['id']),
+      nombre: serializer.fromJson<String>(json['nombre']),
+      descripcion: serializer.fromJson<String?>(json['descripcion']),
+      tipoDescuento: serializer.fromJson<String>(json['tipoDescuento']),
+      valor: serializer.fromJson<double>(json['valor']),
+      fechaInicio: serializer.fromJson<DateTime>(json['fechaInicio']),
+      fechaFin: serializer.fromJson<DateTime?>(json['fechaFin']),
+      activo: serializer.fromJson<bool>(json['activo']),
+      prioridad: serializer.fromJson<int>(json['prioridad']),
+      aplicaA: serializer.fromJson<String>(json['aplicaA']),
+      aplicaHappyHour: serializer.fromJson<bool>(json['aplicaHappyHour']),
+      horaInicioHh: serializer.fromJson<String?>(json['horaInicioHh']),
+      horaFinHh: serializer.fromJson<String?>(json['horaFinHh']),
+      precioMinimoFinal: serializer.fromJson<double?>(
+        json['precioMinimoFinal'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'nombre': serializer.toJson<String>(nombre),
+      'descripcion': serializer.toJson<String?>(descripcion),
+      'tipoDescuento': serializer.toJson<String>(tipoDescuento),
+      'valor': serializer.toJson<double>(valor),
+      'fechaInicio': serializer.toJson<DateTime>(fechaInicio),
+      'fechaFin': serializer.toJson<DateTime?>(fechaFin),
+      'activo': serializer.toJson<bool>(activo),
+      'prioridad': serializer.toJson<int>(prioridad),
+      'aplicaA': serializer.toJson<String>(aplicaA),
+      'aplicaHappyHour': serializer.toJson<bool>(aplicaHappyHour),
+      'horaInicioHh': serializer.toJson<String?>(horaInicioHh),
+      'horaFinHh': serializer.toJson<String?>(horaFinHh),
+      'precioMinimoFinal': serializer.toJson<double?>(precioMinimoFinal),
+    };
+  }
+
+  PromocionesCacheData copyWith({
+    int? id,
+    String? nombre,
+    Value<String?> descripcion = const Value.absent(),
+    String? tipoDescuento,
+    double? valor,
+    DateTime? fechaInicio,
+    Value<DateTime?> fechaFin = const Value.absent(),
+    bool? activo,
+    int? prioridad,
+    String? aplicaA,
+    bool? aplicaHappyHour,
+    Value<String?> horaInicioHh = const Value.absent(),
+    Value<String?> horaFinHh = const Value.absent(),
+    Value<double?> precioMinimoFinal = const Value.absent(),
+  }) => PromocionesCacheData(
+    id: id ?? this.id,
+    nombre: nombre ?? this.nombre,
+    descripcion: descripcion.present ? descripcion.value : this.descripcion,
+    tipoDescuento: tipoDescuento ?? this.tipoDescuento,
+    valor: valor ?? this.valor,
+    fechaInicio: fechaInicio ?? this.fechaInicio,
+    fechaFin: fechaFin.present ? fechaFin.value : this.fechaFin,
+    activo: activo ?? this.activo,
+    prioridad: prioridad ?? this.prioridad,
+    aplicaA: aplicaA ?? this.aplicaA,
+    aplicaHappyHour: aplicaHappyHour ?? this.aplicaHappyHour,
+    horaInicioHh: horaInicioHh.present ? horaInicioHh.value : this.horaInicioHh,
+    horaFinHh: horaFinHh.present ? horaFinHh.value : this.horaFinHh,
+    precioMinimoFinal:
+        precioMinimoFinal.present
+            ? precioMinimoFinal.value
+            : this.precioMinimoFinal,
+  );
+  PromocionesCacheData copyWithCompanion(PromocionesCacheCompanion data) {
+    return PromocionesCacheData(
+      id: data.id.present ? data.id.value : this.id,
+      nombre: data.nombre.present ? data.nombre.value : this.nombre,
+      descripcion:
+          data.descripcion.present ? data.descripcion.value : this.descripcion,
+      tipoDescuento:
+          data.tipoDescuento.present
+              ? data.tipoDescuento.value
+              : this.tipoDescuento,
+      valor: data.valor.present ? data.valor.value : this.valor,
+      fechaInicio:
+          data.fechaInicio.present ? data.fechaInicio.value : this.fechaInicio,
+      fechaFin: data.fechaFin.present ? data.fechaFin.value : this.fechaFin,
+      activo: data.activo.present ? data.activo.value : this.activo,
+      prioridad: data.prioridad.present ? data.prioridad.value : this.prioridad,
+      aplicaA: data.aplicaA.present ? data.aplicaA.value : this.aplicaA,
+      aplicaHappyHour:
+          data.aplicaHappyHour.present
+              ? data.aplicaHappyHour.value
+              : this.aplicaHappyHour,
+      horaInicioHh:
+          data.horaInicioHh.present
+              ? data.horaInicioHh.value
+              : this.horaInicioHh,
+      horaFinHh: data.horaFinHh.present ? data.horaFinHh.value : this.horaFinHh,
+      precioMinimoFinal:
+          data.precioMinimoFinal.present
+              ? data.precioMinimoFinal.value
+              : this.precioMinimoFinal,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PromocionesCacheData(')
+          ..write('id: $id, ')
+          ..write('nombre: $nombre, ')
+          ..write('descripcion: $descripcion, ')
+          ..write('tipoDescuento: $tipoDescuento, ')
+          ..write('valor: $valor, ')
+          ..write('fechaInicio: $fechaInicio, ')
+          ..write('fechaFin: $fechaFin, ')
+          ..write('activo: $activo, ')
+          ..write('prioridad: $prioridad, ')
+          ..write('aplicaA: $aplicaA, ')
+          ..write('aplicaHappyHour: $aplicaHappyHour, ')
+          ..write('horaInicioHh: $horaInicioHh, ')
+          ..write('horaFinHh: $horaFinHh, ')
+          ..write('precioMinimoFinal: $precioMinimoFinal')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    nombre,
+    descripcion,
+    tipoDescuento,
+    valor,
+    fechaInicio,
+    fechaFin,
+    activo,
+    prioridad,
+    aplicaA,
+    aplicaHappyHour,
+    horaInicioHh,
+    horaFinHh,
+    precioMinimoFinal,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PromocionesCacheData &&
+          other.id == this.id &&
+          other.nombre == this.nombre &&
+          other.descripcion == this.descripcion &&
+          other.tipoDescuento == this.tipoDescuento &&
+          other.valor == this.valor &&
+          other.fechaInicio == this.fechaInicio &&
+          other.fechaFin == this.fechaFin &&
+          other.activo == this.activo &&
+          other.prioridad == this.prioridad &&
+          other.aplicaA == this.aplicaA &&
+          other.aplicaHappyHour == this.aplicaHappyHour &&
+          other.horaInicioHh == this.horaInicioHh &&
+          other.horaFinHh == this.horaFinHh &&
+          other.precioMinimoFinal == this.precioMinimoFinal);
+}
+
+class PromocionesCacheCompanion extends UpdateCompanion<PromocionesCacheData> {
+  final Value<int> id;
+  final Value<String> nombre;
+  final Value<String?> descripcion;
+  final Value<String> tipoDescuento;
+  final Value<double> valor;
+  final Value<DateTime> fechaInicio;
+  final Value<DateTime?> fechaFin;
+  final Value<bool> activo;
+  final Value<int> prioridad;
+  final Value<String> aplicaA;
+  final Value<bool> aplicaHappyHour;
+  final Value<String?> horaInicioHh;
+  final Value<String?> horaFinHh;
+  final Value<double?> precioMinimoFinal;
+  const PromocionesCacheCompanion({
+    this.id = const Value.absent(),
+    this.nombre = const Value.absent(),
+    this.descripcion = const Value.absent(),
+    this.tipoDescuento = const Value.absent(),
+    this.valor = const Value.absent(),
+    this.fechaInicio = const Value.absent(),
+    this.fechaFin = const Value.absent(),
+    this.activo = const Value.absent(),
+    this.prioridad = const Value.absent(),
+    this.aplicaA = const Value.absent(),
+    this.aplicaHappyHour = const Value.absent(),
+    this.horaInicioHh = const Value.absent(),
+    this.horaFinHh = const Value.absent(),
+    this.precioMinimoFinal = const Value.absent(),
+  });
+  PromocionesCacheCompanion.insert({
+    this.id = const Value.absent(),
+    required String nombre,
+    this.descripcion = const Value.absent(),
+    required String tipoDescuento,
+    required double valor,
+    required DateTime fechaInicio,
+    this.fechaFin = const Value.absent(),
+    this.activo = const Value.absent(),
+    this.prioridad = const Value.absent(),
+    this.aplicaA = const Value.absent(),
+    this.aplicaHappyHour = const Value.absent(),
+    this.horaInicioHh = const Value.absent(),
+    this.horaFinHh = const Value.absent(),
+    this.precioMinimoFinal = const Value.absent(),
+  }) : nombre = Value(nombre),
+       tipoDescuento = Value(tipoDescuento),
+       valor = Value(valor),
+       fechaInicio = Value(fechaInicio);
+  static Insertable<PromocionesCacheData> custom({
+    Expression<int>? id,
+    Expression<String>? nombre,
+    Expression<String>? descripcion,
+    Expression<String>? tipoDescuento,
+    Expression<double>? valor,
+    Expression<DateTime>? fechaInicio,
+    Expression<DateTime>? fechaFin,
+    Expression<bool>? activo,
+    Expression<int>? prioridad,
+    Expression<String>? aplicaA,
+    Expression<bool>? aplicaHappyHour,
+    Expression<String>? horaInicioHh,
+    Expression<String>? horaFinHh,
+    Expression<double>? precioMinimoFinal,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (nombre != null) 'nombre': nombre,
+      if (descripcion != null) 'descripcion': descripcion,
+      if (tipoDescuento != null) 'tipo_descuento': tipoDescuento,
+      if (valor != null) 'valor': valor,
+      if (fechaInicio != null) 'fecha_inicio': fechaInicio,
+      if (fechaFin != null) 'fecha_fin': fechaFin,
+      if (activo != null) 'activo': activo,
+      if (prioridad != null) 'prioridad': prioridad,
+      if (aplicaA != null) 'aplica_a': aplicaA,
+      if (aplicaHappyHour != null) 'aplica_happy_hour': aplicaHappyHour,
+      if (horaInicioHh != null) 'hora_inicio_hh': horaInicioHh,
+      if (horaFinHh != null) 'hora_fin_hh': horaFinHh,
+      if (precioMinimoFinal != null) 'precio_minimo_final': precioMinimoFinal,
+    });
+  }
+
+  PromocionesCacheCompanion copyWith({
+    Value<int>? id,
+    Value<String>? nombre,
+    Value<String?>? descripcion,
+    Value<String>? tipoDescuento,
+    Value<double>? valor,
+    Value<DateTime>? fechaInicio,
+    Value<DateTime?>? fechaFin,
+    Value<bool>? activo,
+    Value<int>? prioridad,
+    Value<String>? aplicaA,
+    Value<bool>? aplicaHappyHour,
+    Value<String?>? horaInicioHh,
+    Value<String?>? horaFinHh,
+    Value<double?>? precioMinimoFinal,
+  }) {
+    return PromocionesCacheCompanion(
+      id: id ?? this.id,
+      nombre: nombre ?? this.nombre,
+      descripcion: descripcion ?? this.descripcion,
+      tipoDescuento: tipoDescuento ?? this.tipoDescuento,
+      valor: valor ?? this.valor,
+      fechaInicio: fechaInicio ?? this.fechaInicio,
+      fechaFin: fechaFin ?? this.fechaFin,
+      activo: activo ?? this.activo,
+      prioridad: prioridad ?? this.prioridad,
+      aplicaA: aplicaA ?? this.aplicaA,
+      aplicaHappyHour: aplicaHappyHour ?? this.aplicaHappyHour,
+      horaInicioHh: horaInicioHh ?? this.horaInicioHh,
+      horaFinHh: horaFinHh ?? this.horaFinHh,
+      precioMinimoFinal: precioMinimoFinal ?? this.precioMinimoFinal,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (nombre.present) {
+      map['nombre'] = Variable<String>(nombre.value);
+    }
+    if (descripcion.present) {
+      map['descripcion'] = Variable<String>(descripcion.value);
+    }
+    if (tipoDescuento.present) {
+      map['tipo_descuento'] = Variable<String>(tipoDescuento.value);
+    }
+    if (valor.present) {
+      map['valor'] = Variable<double>(valor.value);
+    }
+    if (fechaInicio.present) {
+      map['fecha_inicio'] = Variable<DateTime>(fechaInicio.value);
+    }
+    if (fechaFin.present) {
+      map['fecha_fin'] = Variable<DateTime>(fechaFin.value);
+    }
+    if (activo.present) {
+      map['activo'] = Variable<bool>(activo.value);
+    }
+    if (prioridad.present) {
+      map['prioridad'] = Variable<int>(prioridad.value);
+    }
+    if (aplicaA.present) {
+      map['aplica_a'] = Variable<String>(aplicaA.value);
+    }
+    if (aplicaHappyHour.present) {
+      map['aplica_happy_hour'] = Variable<bool>(aplicaHappyHour.value);
+    }
+    if (horaInicioHh.present) {
+      map['hora_inicio_hh'] = Variable<String>(horaInicioHh.value);
+    }
+    if (horaFinHh.present) {
+      map['hora_fin_hh'] = Variable<String>(horaFinHh.value);
+    }
+    if (precioMinimoFinal.present) {
+      map['precio_minimo_final'] = Variable<double>(precioMinimoFinal.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PromocionesCacheCompanion(')
+          ..write('id: $id, ')
+          ..write('nombre: $nombre, ')
+          ..write('descripcion: $descripcion, ')
+          ..write('tipoDescuento: $tipoDescuento, ')
+          ..write('valor: $valor, ')
+          ..write('fechaInicio: $fechaInicio, ')
+          ..write('fechaFin: $fechaFin, ')
+          ..write('activo: $activo, ')
+          ..write('prioridad: $prioridad, ')
+          ..write('aplicaA: $aplicaA, ')
+          ..write('aplicaHappyHour: $aplicaHappyHour, ')
+          ..write('horaInicioHh: $horaInicioHh, ')
+          ..write('horaFinHh: $horaFinHh, ')
+          ..write('precioMinimoFinal: $precioMinimoFinal')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PromocionesProductosCacheTable extends PromocionesProductosCache
+    with
+        TableInfo<
+          $PromocionesProductosCacheTable,
+          PromocionesProductosCacheData
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PromocionesProductosCacheTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _promocionIdMeta = const VerificationMeta(
+    'promocionId',
+  );
+  @override
+  late final GeneratedColumn<int> promocionId = GeneratedColumn<int>(
+    'promocion_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _productoIdMeta = const VerificationMeta(
+    'productoId',
+  );
+  @override
+  late final GeneratedColumn<int> productoId = GeneratedColumn<int>(
+    'producto_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, promocionId, productoId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'promociones_productos_cache';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PromocionesProductosCacheData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('promocion_id')) {
+      context.handle(
+        _promocionIdMeta,
+        promocionId.isAcceptableOrUnknown(
+          data['promocion_id']!,
+          _promocionIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_promocionIdMeta);
+    }
+    if (data.containsKey('producto_id')) {
+      context.handle(
+        _productoIdMeta,
+        productoId.isAcceptableOrUnknown(data['producto_id']!, _productoIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productoIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PromocionesProductosCacheData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PromocionesProductosCacheData(
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      promocionId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}promocion_id'],
+          )!,
+      productoId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}producto_id'],
+          )!,
+    );
+  }
+
+  @override
+  $PromocionesProductosCacheTable createAlias(String alias) {
+    return $PromocionesProductosCacheTable(attachedDatabase, alias);
+  }
+}
+
+class PromocionesProductosCacheData extends DataClass
+    implements Insertable<PromocionesProductosCacheData> {
+  final int id;
+  final int promocionId;
+  final int productoId;
+  const PromocionesProductosCacheData({
+    required this.id,
+    required this.promocionId,
+    required this.productoId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['promocion_id'] = Variable<int>(promocionId);
+    map['producto_id'] = Variable<int>(productoId);
+    return map;
+  }
+
+  PromocionesProductosCacheCompanion toCompanion(bool nullToAbsent) {
+    return PromocionesProductosCacheCompanion(
+      id: Value(id),
+      promocionId: Value(promocionId),
+      productoId: Value(productoId),
+    );
+  }
+
+  factory PromocionesProductosCacheData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PromocionesProductosCacheData(
+      id: serializer.fromJson<int>(json['id']),
+      promocionId: serializer.fromJson<int>(json['promocionId']),
+      productoId: serializer.fromJson<int>(json['productoId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'promocionId': serializer.toJson<int>(promocionId),
+      'productoId': serializer.toJson<int>(productoId),
+    };
+  }
+
+  PromocionesProductosCacheData copyWith({
+    int? id,
+    int? promocionId,
+    int? productoId,
+  }) => PromocionesProductosCacheData(
+    id: id ?? this.id,
+    promocionId: promocionId ?? this.promocionId,
+    productoId: productoId ?? this.productoId,
+  );
+  PromocionesProductosCacheData copyWithCompanion(
+    PromocionesProductosCacheCompanion data,
+  ) {
+    return PromocionesProductosCacheData(
+      id: data.id.present ? data.id.value : this.id,
+      promocionId:
+          data.promocionId.present ? data.promocionId.value : this.promocionId,
+      productoId:
+          data.productoId.present ? data.productoId.value : this.productoId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PromocionesProductosCacheData(')
+          ..write('id: $id, ')
+          ..write('promocionId: $promocionId, ')
+          ..write('productoId: $productoId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, promocionId, productoId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PromocionesProductosCacheData &&
+          other.id == this.id &&
+          other.promocionId == this.promocionId &&
+          other.productoId == this.productoId);
+}
+
+class PromocionesProductosCacheCompanion
+    extends UpdateCompanion<PromocionesProductosCacheData> {
+  final Value<int> id;
+  final Value<int> promocionId;
+  final Value<int> productoId;
+  const PromocionesProductosCacheCompanion({
+    this.id = const Value.absent(),
+    this.promocionId = const Value.absent(),
+    this.productoId = const Value.absent(),
+  });
+  PromocionesProductosCacheCompanion.insert({
+    this.id = const Value.absent(),
+    required int promocionId,
+    required int productoId,
+  }) : promocionId = Value(promocionId),
+       productoId = Value(productoId);
+  static Insertable<PromocionesProductosCacheData> custom({
+    Expression<int>? id,
+    Expression<int>? promocionId,
+    Expression<int>? productoId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (promocionId != null) 'promocion_id': promocionId,
+      if (productoId != null) 'producto_id': productoId,
+    });
+  }
+
+  PromocionesProductosCacheCompanion copyWith({
+    Value<int>? id,
+    Value<int>? promocionId,
+    Value<int>? productoId,
+  }) {
+    return PromocionesProductosCacheCompanion(
+      id: id ?? this.id,
+      promocionId: promocionId ?? this.promocionId,
+      productoId: productoId ?? this.productoId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (promocionId.present) {
+      map['promocion_id'] = Variable<int>(promocionId.value);
+    }
+    if (productoId.present) {
+      map['producto_id'] = Variable<int>(productoId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PromocionesProductosCacheCompanion(')
+          ..write('id: $id, ')
+          ..write('promocionId: $promocionId, ')
+          ..write('productoId: $productoId')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PromocionesCategoriasCacheTable extends PromocionesCategoriasCache
+    with
+        TableInfo<
+          $PromocionesCategoriasCacheTable,
+          PromocionesCategoriasCacheData
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PromocionesCategoriasCacheTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _promocionIdMeta = const VerificationMeta(
+    'promocionId',
+  );
+  @override
+  late final GeneratedColumn<int> promocionId = GeneratedColumn<int>(
+    'promocion_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _categoriaIdMeta = const VerificationMeta(
+    'categoriaId',
+  );
+  @override
+  late final GeneratedColumn<int> categoriaId = GeneratedColumn<int>(
+    'categoria_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, promocionId, categoriaId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'promociones_categorias_cache';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PromocionesCategoriasCacheData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('promocion_id')) {
+      context.handle(
+        _promocionIdMeta,
+        promocionId.isAcceptableOrUnknown(
+          data['promocion_id']!,
+          _promocionIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_promocionIdMeta);
+    }
+    if (data.containsKey('categoria_id')) {
+      context.handle(
+        _categoriaIdMeta,
+        categoriaId.isAcceptableOrUnknown(
+          data['categoria_id']!,
+          _categoriaIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_categoriaIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PromocionesCategoriasCacheData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PromocionesCategoriasCacheData(
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      promocionId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}promocion_id'],
+          )!,
+      categoriaId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}categoria_id'],
+          )!,
+    );
+  }
+
+  @override
+  $PromocionesCategoriasCacheTable createAlias(String alias) {
+    return $PromocionesCategoriasCacheTable(attachedDatabase, alias);
+  }
+}
+
+class PromocionesCategoriasCacheData extends DataClass
+    implements Insertable<PromocionesCategoriasCacheData> {
+  final int id;
+  final int promocionId;
+  final int categoriaId;
+  const PromocionesCategoriasCacheData({
+    required this.id,
+    required this.promocionId,
+    required this.categoriaId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['promocion_id'] = Variable<int>(promocionId);
+    map['categoria_id'] = Variable<int>(categoriaId);
+    return map;
+  }
+
+  PromocionesCategoriasCacheCompanion toCompanion(bool nullToAbsent) {
+    return PromocionesCategoriasCacheCompanion(
+      id: Value(id),
+      promocionId: Value(promocionId),
+      categoriaId: Value(categoriaId),
+    );
+  }
+
+  factory PromocionesCategoriasCacheData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PromocionesCategoriasCacheData(
+      id: serializer.fromJson<int>(json['id']),
+      promocionId: serializer.fromJson<int>(json['promocionId']),
+      categoriaId: serializer.fromJson<int>(json['categoriaId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'promocionId': serializer.toJson<int>(promocionId),
+      'categoriaId': serializer.toJson<int>(categoriaId),
+    };
+  }
+
+  PromocionesCategoriasCacheData copyWith({
+    int? id,
+    int? promocionId,
+    int? categoriaId,
+  }) => PromocionesCategoriasCacheData(
+    id: id ?? this.id,
+    promocionId: promocionId ?? this.promocionId,
+    categoriaId: categoriaId ?? this.categoriaId,
+  );
+  PromocionesCategoriasCacheData copyWithCompanion(
+    PromocionesCategoriasCacheCompanion data,
+  ) {
+    return PromocionesCategoriasCacheData(
+      id: data.id.present ? data.id.value : this.id,
+      promocionId:
+          data.promocionId.present ? data.promocionId.value : this.promocionId,
+      categoriaId:
+          data.categoriaId.present ? data.categoriaId.value : this.categoriaId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PromocionesCategoriasCacheData(')
+          ..write('id: $id, ')
+          ..write('promocionId: $promocionId, ')
+          ..write('categoriaId: $categoriaId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, promocionId, categoriaId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PromocionesCategoriasCacheData &&
+          other.id == this.id &&
+          other.promocionId == this.promocionId &&
+          other.categoriaId == this.categoriaId);
+}
+
+class PromocionesCategoriasCacheCompanion
+    extends UpdateCompanion<PromocionesCategoriasCacheData> {
+  final Value<int> id;
+  final Value<int> promocionId;
+  final Value<int> categoriaId;
+  const PromocionesCategoriasCacheCompanion({
+    this.id = const Value.absent(),
+    this.promocionId = const Value.absent(),
+    this.categoriaId = const Value.absent(),
+  });
+  PromocionesCategoriasCacheCompanion.insert({
+    this.id = const Value.absent(),
+    required int promocionId,
+    required int categoriaId,
+  }) : promocionId = Value(promocionId),
+       categoriaId = Value(categoriaId);
+  static Insertable<PromocionesCategoriasCacheData> custom({
+    Expression<int>? id,
+    Expression<int>? promocionId,
+    Expression<int>? categoriaId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (promocionId != null) 'promocion_id': promocionId,
+      if (categoriaId != null) 'categoria_id': categoriaId,
+    });
+  }
+
+  PromocionesCategoriasCacheCompanion copyWith({
+    Value<int>? id,
+    Value<int>? promocionId,
+    Value<int>? categoriaId,
+  }) {
+    return PromocionesCategoriasCacheCompanion(
+      id: id ?? this.id,
+      promocionId: promocionId ?? this.promocionId,
+      categoriaId: categoriaId ?? this.categoriaId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (promocionId.present) {
+      map['promocion_id'] = Variable<int>(promocionId.value);
+    }
+    if (categoriaId.present) {
+      map['categoria_id'] = Variable<int>(categoriaId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PromocionesCategoriasCacheCompanion(')
+          ..write('id: $id, ')
+          ..write('promocionId: $promocionId, ')
+          ..write('categoriaId: $categoriaId')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4039,11 +5476,21 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $HistorialDetallesTable historialDetalles =
       $HistorialDetallesTable(this);
+  late final $PromocionesCacheTable promocionesCache = $PromocionesCacheTable(
+    this,
+  );
+  late final $PromocionesProductosCacheTable promocionesProductosCache =
+      $PromocionesProductosCacheTable(this);
+  late final $PromocionesCategoriasCacheTable promocionesCategoriasCache =
+      $PromocionesCategoriasCacheTable(this);
   late final SesionDao sesionDao = SesionDao(this as AppDatabase);
   late final CatalogoDao catalogoDao = CatalogoDao(this as AppDatabase);
   late final MesaDao mesaDao = MesaDao(this as AppDatabase);
   late final CarritoDao carritoDao = CarritoDao(this as AppDatabase);
   late final HistorialDao historialDao = HistorialDao(this as AppDatabase);
+  late final PromocionesDao promocionesDao = PromocionesDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4056,6 +5503,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     carritoLocal,
     historialPedidos,
     historialDetalles,
+    promocionesCache,
+    promocionesProductosCache,
+    promocionesCategoriasCache,
   ];
 }
 
@@ -4064,6 +5514,7 @@ typedef $$SesionClienteTableCreateCompanionBuilder =
       Value<int> id,
       Value<String?> sessionToken,
       Value<String> nombreDisplay,
+      Value<String?> email,
       Value<int?> clienteId,
       Value<bool> esInvitado,
       Value<DateTime> creadoEn,
@@ -4074,6 +5525,7 @@ typedef $$SesionClienteTableUpdateCompanionBuilder =
       Value<int> id,
       Value<String?> sessionToken,
       Value<String> nombreDisplay,
+      Value<String?> email,
       Value<int?> clienteId,
       Value<bool> esInvitado,
       Value<DateTime> creadoEn,
@@ -4101,6 +5553,11 @@ class $$SesionClienteTableFilterComposer
 
   ColumnFilters<String> get nombreDisplay => $composableBuilder(
     column: $table.nombreDisplay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4149,6 +5606,11 @@ class $$SesionClienteTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get clienteId => $composableBuilder(
     column: $table.clienteId,
     builder: (column) => ColumnOrderings(column),
@@ -4191,6 +5653,9 @@ class $$SesionClienteTableAnnotationComposer
     column: $table.nombreDisplay,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
 
   GeneratedColumn<int> get clienteId =>
       $composableBuilder(column: $table.clienteId, builder: (column) => column);
@@ -4249,6 +5714,7 @@ class $$SesionClienteTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String?> sessionToken = const Value.absent(),
                 Value<String> nombreDisplay = const Value.absent(),
+                Value<String?> email = const Value.absent(),
                 Value<int?> clienteId = const Value.absent(),
                 Value<bool> esInvitado = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
@@ -4257,6 +5723,7 @@ class $$SesionClienteTableTableManager
                 id: id,
                 sessionToken: sessionToken,
                 nombreDisplay: nombreDisplay,
+                email: email,
                 clienteId: clienteId,
                 esInvitado: esInvitado,
                 creadoEn: creadoEn,
@@ -4267,6 +5734,7 @@ class $$SesionClienteTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String?> sessionToken = const Value.absent(),
                 Value<String> nombreDisplay = const Value.absent(),
+                Value<String?> email = const Value.absent(),
                 Value<int?> clienteId = const Value.absent(),
                 Value<bool> esInvitado = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
@@ -4275,6 +5743,7 @@ class $$SesionClienteTableTableManager
                 id: id,
                 sessionToken: sessionToken,
                 nombreDisplay: nombreDisplay,
+                email: email,
                 clienteId: clienteId,
                 esInvitado: esInvitado,
                 creadoEn: creadoEn,
@@ -6547,6 +8016,779 @@ typedef $$HistorialDetallesTableProcessedTableManager =
       HistorialDetalle,
       PrefetchHooks Function()
     >;
+typedef $$PromocionesCacheTableCreateCompanionBuilder =
+    PromocionesCacheCompanion Function({
+      Value<int> id,
+      required String nombre,
+      Value<String?> descripcion,
+      required String tipoDescuento,
+      required double valor,
+      required DateTime fechaInicio,
+      Value<DateTime?> fechaFin,
+      Value<bool> activo,
+      Value<int> prioridad,
+      Value<String> aplicaA,
+      Value<bool> aplicaHappyHour,
+      Value<String?> horaInicioHh,
+      Value<String?> horaFinHh,
+      Value<double?> precioMinimoFinal,
+    });
+typedef $$PromocionesCacheTableUpdateCompanionBuilder =
+    PromocionesCacheCompanion Function({
+      Value<int> id,
+      Value<String> nombre,
+      Value<String?> descripcion,
+      Value<String> tipoDescuento,
+      Value<double> valor,
+      Value<DateTime> fechaInicio,
+      Value<DateTime?> fechaFin,
+      Value<bool> activo,
+      Value<int> prioridad,
+      Value<String> aplicaA,
+      Value<bool> aplicaHappyHour,
+      Value<String?> horaInicioHh,
+      Value<String?> horaFinHh,
+      Value<double?> precioMinimoFinal,
+    });
+
+class $$PromocionesCacheTableFilterComposer
+    extends Composer<_$AppDatabase, $PromocionesCacheTable> {
+  $$PromocionesCacheTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nombre => $composableBuilder(
+    column: $table.nombre,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get descripcion => $composableBuilder(
+    column: $table.descripcion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tipoDescuento => $composableBuilder(
+    column: $table.tipoDescuento,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get valor => $composableBuilder(
+    column: $table.valor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fechaInicio => $composableBuilder(
+    column: $table.fechaInicio,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fechaFin => $composableBuilder(
+    column: $table.fechaFin,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get activo => $composableBuilder(
+    column: $table.activo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get prioridad => $composableBuilder(
+    column: $table.prioridad,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get aplicaA => $composableBuilder(
+    column: $table.aplicaA,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get aplicaHappyHour => $composableBuilder(
+    column: $table.aplicaHappyHour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get horaInicioHh => $composableBuilder(
+    column: $table.horaInicioHh,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get horaFinHh => $composableBuilder(
+    column: $table.horaFinHh,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get precioMinimoFinal => $composableBuilder(
+    column: $table.precioMinimoFinal,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PromocionesCacheTableOrderingComposer
+    extends Composer<_$AppDatabase, $PromocionesCacheTable> {
+  $$PromocionesCacheTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nombre => $composableBuilder(
+    column: $table.nombre,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get descripcion => $composableBuilder(
+    column: $table.descripcion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tipoDescuento => $composableBuilder(
+    column: $table.tipoDescuento,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get valor => $composableBuilder(
+    column: $table.valor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fechaInicio => $composableBuilder(
+    column: $table.fechaInicio,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fechaFin => $composableBuilder(
+    column: $table.fechaFin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get activo => $composableBuilder(
+    column: $table.activo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get prioridad => $composableBuilder(
+    column: $table.prioridad,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get aplicaA => $composableBuilder(
+    column: $table.aplicaA,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get aplicaHappyHour => $composableBuilder(
+    column: $table.aplicaHappyHour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get horaInicioHh => $composableBuilder(
+    column: $table.horaInicioHh,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get horaFinHh => $composableBuilder(
+    column: $table.horaFinHh,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get precioMinimoFinal => $composableBuilder(
+    column: $table.precioMinimoFinal,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PromocionesCacheTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PromocionesCacheTable> {
+  $$PromocionesCacheTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get nombre =>
+      $composableBuilder(column: $table.nombre, builder: (column) => column);
+
+  GeneratedColumn<String> get descripcion => $composableBuilder(
+    column: $table.descripcion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get tipoDescuento => $composableBuilder(
+    column: $table.tipoDescuento,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get valor =>
+      $composableBuilder(column: $table.valor, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fechaInicio => $composableBuilder(
+    column: $table.fechaInicio,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get fechaFin =>
+      $composableBuilder(column: $table.fechaFin, builder: (column) => column);
+
+  GeneratedColumn<bool> get activo =>
+      $composableBuilder(column: $table.activo, builder: (column) => column);
+
+  GeneratedColumn<int> get prioridad =>
+      $composableBuilder(column: $table.prioridad, builder: (column) => column);
+
+  GeneratedColumn<String> get aplicaA =>
+      $composableBuilder(column: $table.aplicaA, builder: (column) => column);
+
+  GeneratedColumn<bool> get aplicaHappyHour => $composableBuilder(
+    column: $table.aplicaHappyHour,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get horaInicioHh => $composableBuilder(
+    column: $table.horaInicioHh,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get horaFinHh =>
+      $composableBuilder(column: $table.horaFinHh, builder: (column) => column);
+
+  GeneratedColumn<double> get precioMinimoFinal => $composableBuilder(
+    column: $table.precioMinimoFinal,
+    builder: (column) => column,
+  );
+}
+
+class $$PromocionesCacheTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PromocionesCacheTable,
+          PromocionesCacheData,
+          $$PromocionesCacheTableFilterComposer,
+          $$PromocionesCacheTableOrderingComposer,
+          $$PromocionesCacheTableAnnotationComposer,
+          $$PromocionesCacheTableCreateCompanionBuilder,
+          $$PromocionesCacheTableUpdateCompanionBuilder,
+          (
+            PromocionesCacheData,
+            BaseReferences<
+              _$AppDatabase,
+              $PromocionesCacheTable,
+              PromocionesCacheData
+            >,
+          ),
+          PromocionesCacheData,
+          PrefetchHooks Function()
+        > {
+  $$PromocionesCacheTableTableManager(
+    _$AppDatabase db,
+    $PromocionesCacheTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () =>
+                  $$PromocionesCacheTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$PromocionesCacheTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer:
+              () => $$PromocionesCacheTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> nombre = const Value.absent(),
+                Value<String?> descripcion = const Value.absent(),
+                Value<String> tipoDescuento = const Value.absent(),
+                Value<double> valor = const Value.absent(),
+                Value<DateTime> fechaInicio = const Value.absent(),
+                Value<DateTime?> fechaFin = const Value.absent(),
+                Value<bool> activo = const Value.absent(),
+                Value<int> prioridad = const Value.absent(),
+                Value<String> aplicaA = const Value.absent(),
+                Value<bool> aplicaHappyHour = const Value.absent(),
+                Value<String?> horaInicioHh = const Value.absent(),
+                Value<String?> horaFinHh = const Value.absent(),
+                Value<double?> precioMinimoFinal = const Value.absent(),
+              }) => PromocionesCacheCompanion(
+                id: id,
+                nombre: nombre,
+                descripcion: descripcion,
+                tipoDescuento: tipoDescuento,
+                valor: valor,
+                fechaInicio: fechaInicio,
+                fechaFin: fechaFin,
+                activo: activo,
+                prioridad: prioridad,
+                aplicaA: aplicaA,
+                aplicaHappyHour: aplicaHappyHour,
+                horaInicioHh: horaInicioHh,
+                horaFinHh: horaFinHh,
+                precioMinimoFinal: precioMinimoFinal,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String nombre,
+                Value<String?> descripcion = const Value.absent(),
+                required String tipoDescuento,
+                required double valor,
+                required DateTime fechaInicio,
+                Value<DateTime?> fechaFin = const Value.absent(),
+                Value<bool> activo = const Value.absent(),
+                Value<int> prioridad = const Value.absent(),
+                Value<String> aplicaA = const Value.absent(),
+                Value<bool> aplicaHappyHour = const Value.absent(),
+                Value<String?> horaInicioHh = const Value.absent(),
+                Value<String?> horaFinHh = const Value.absent(),
+                Value<double?> precioMinimoFinal = const Value.absent(),
+              }) => PromocionesCacheCompanion.insert(
+                id: id,
+                nombre: nombre,
+                descripcion: descripcion,
+                tipoDescuento: tipoDescuento,
+                valor: valor,
+                fechaInicio: fechaInicio,
+                fechaFin: fechaFin,
+                activo: activo,
+                prioridad: prioridad,
+                aplicaA: aplicaA,
+                aplicaHappyHour: aplicaHappyHour,
+                horaInicioHh: horaInicioHh,
+                horaFinHh: horaFinHh,
+                precioMinimoFinal: precioMinimoFinal,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PromocionesCacheTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PromocionesCacheTable,
+      PromocionesCacheData,
+      $$PromocionesCacheTableFilterComposer,
+      $$PromocionesCacheTableOrderingComposer,
+      $$PromocionesCacheTableAnnotationComposer,
+      $$PromocionesCacheTableCreateCompanionBuilder,
+      $$PromocionesCacheTableUpdateCompanionBuilder,
+      (
+        PromocionesCacheData,
+        BaseReferences<
+          _$AppDatabase,
+          $PromocionesCacheTable,
+          PromocionesCacheData
+        >,
+      ),
+      PromocionesCacheData,
+      PrefetchHooks Function()
+    >;
+typedef $$PromocionesProductosCacheTableCreateCompanionBuilder =
+    PromocionesProductosCacheCompanion Function({
+      Value<int> id,
+      required int promocionId,
+      required int productoId,
+    });
+typedef $$PromocionesProductosCacheTableUpdateCompanionBuilder =
+    PromocionesProductosCacheCompanion Function({
+      Value<int> id,
+      Value<int> promocionId,
+      Value<int> productoId,
+    });
+
+class $$PromocionesProductosCacheTableFilterComposer
+    extends Composer<_$AppDatabase, $PromocionesProductosCacheTable> {
+  $$PromocionesProductosCacheTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get promocionId => $composableBuilder(
+    column: $table.promocionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get productoId => $composableBuilder(
+    column: $table.productoId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PromocionesProductosCacheTableOrderingComposer
+    extends Composer<_$AppDatabase, $PromocionesProductosCacheTable> {
+  $$PromocionesProductosCacheTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get promocionId => $composableBuilder(
+    column: $table.promocionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get productoId => $composableBuilder(
+    column: $table.productoId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PromocionesProductosCacheTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PromocionesProductosCacheTable> {
+  $$PromocionesProductosCacheTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get promocionId => $composableBuilder(
+    column: $table.promocionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get productoId => $composableBuilder(
+    column: $table.productoId,
+    builder: (column) => column,
+  );
+}
+
+class $$PromocionesProductosCacheTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PromocionesProductosCacheTable,
+          PromocionesProductosCacheData,
+          $$PromocionesProductosCacheTableFilterComposer,
+          $$PromocionesProductosCacheTableOrderingComposer,
+          $$PromocionesProductosCacheTableAnnotationComposer,
+          $$PromocionesProductosCacheTableCreateCompanionBuilder,
+          $$PromocionesProductosCacheTableUpdateCompanionBuilder,
+          (
+            PromocionesProductosCacheData,
+            BaseReferences<
+              _$AppDatabase,
+              $PromocionesProductosCacheTable,
+              PromocionesProductosCacheData
+            >,
+          ),
+          PromocionesProductosCacheData,
+          PrefetchHooks Function()
+        > {
+  $$PromocionesProductosCacheTableTableManager(
+    _$AppDatabase db,
+    $PromocionesProductosCacheTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$PromocionesProductosCacheTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer:
+              () => $$PromocionesProductosCacheTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer:
+              () => $$PromocionesProductosCacheTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> promocionId = const Value.absent(),
+                Value<int> productoId = const Value.absent(),
+              }) => PromocionesProductosCacheCompanion(
+                id: id,
+                promocionId: promocionId,
+                productoId: productoId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int promocionId,
+                required int productoId,
+              }) => PromocionesProductosCacheCompanion.insert(
+                id: id,
+                promocionId: promocionId,
+                productoId: productoId,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PromocionesProductosCacheTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PromocionesProductosCacheTable,
+      PromocionesProductosCacheData,
+      $$PromocionesProductosCacheTableFilterComposer,
+      $$PromocionesProductosCacheTableOrderingComposer,
+      $$PromocionesProductosCacheTableAnnotationComposer,
+      $$PromocionesProductosCacheTableCreateCompanionBuilder,
+      $$PromocionesProductosCacheTableUpdateCompanionBuilder,
+      (
+        PromocionesProductosCacheData,
+        BaseReferences<
+          _$AppDatabase,
+          $PromocionesProductosCacheTable,
+          PromocionesProductosCacheData
+        >,
+      ),
+      PromocionesProductosCacheData,
+      PrefetchHooks Function()
+    >;
+typedef $$PromocionesCategoriasCacheTableCreateCompanionBuilder =
+    PromocionesCategoriasCacheCompanion Function({
+      Value<int> id,
+      required int promocionId,
+      required int categoriaId,
+    });
+typedef $$PromocionesCategoriasCacheTableUpdateCompanionBuilder =
+    PromocionesCategoriasCacheCompanion Function({
+      Value<int> id,
+      Value<int> promocionId,
+      Value<int> categoriaId,
+    });
+
+class $$PromocionesCategoriasCacheTableFilterComposer
+    extends Composer<_$AppDatabase, $PromocionesCategoriasCacheTable> {
+  $$PromocionesCategoriasCacheTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get promocionId => $composableBuilder(
+    column: $table.promocionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get categoriaId => $composableBuilder(
+    column: $table.categoriaId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PromocionesCategoriasCacheTableOrderingComposer
+    extends Composer<_$AppDatabase, $PromocionesCategoriasCacheTable> {
+  $$PromocionesCategoriasCacheTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get promocionId => $composableBuilder(
+    column: $table.promocionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get categoriaId => $composableBuilder(
+    column: $table.categoriaId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PromocionesCategoriasCacheTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PromocionesCategoriasCacheTable> {
+  $$PromocionesCategoriasCacheTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get promocionId => $composableBuilder(
+    column: $table.promocionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get categoriaId => $composableBuilder(
+    column: $table.categoriaId,
+    builder: (column) => column,
+  );
+}
+
+class $$PromocionesCategoriasCacheTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PromocionesCategoriasCacheTable,
+          PromocionesCategoriasCacheData,
+          $$PromocionesCategoriasCacheTableFilterComposer,
+          $$PromocionesCategoriasCacheTableOrderingComposer,
+          $$PromocionesCategoriasCacheTableAnnotationComposer,
+          $$PromocionesCategoriasCacheTableCreateCompanionBuilder,
+          $$PromocionesCategoriasCacheTableUpdateCompanionBuilder,
+          (
+            PromocionesCategoriasCacheData,
+            BaseReferences<
+              _$AppDatabase,
+              $PromocionesCategoriasCacheTable,
+              PromocionesCategoriasCacheData
+            >,
+          ),
+          PromocionesCategoriasCacheData,
+          PrefetchHooks Function()
+        > {
+  $$PromocionesCategoriasCacheTableTableManager(
+    _$AppDatabase db,
+    $PromocionesCategoriasCacheTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$PromocionesCategoriasCacheTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer:
+              () => $$PromocionesCategoriasCacheTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer:
+              () => $$PromocionesCategoriasCacheTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> promocionId = const Value.absent(),
+                Value<int> categoriaId = const Value.absent(),
+              }) => PromocionesCategoriasCacheCompanion(
+                id: id,
+                promocionId: promocionId,
+                categoriaId: categoriaId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int promocionId,
+                required int categoriaId,
+              }) => PromocionesCategoriasCacheCompanion.insert(
+                id: id,
+                promocionId: promocionId,
+                categoriaId: categoriaId,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PromocionesCategoriasCacheTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PromocionesCategoriasCacheTable,
+      PromocionesCategoriasCacheData,
+      $$PromocionesCategoriasCacheTableFilterComposer,
+      $$PromocionesCategoriasCacheTableOrderingComposer,
+      $$PromocionesCategoriasCacheTableAnnotationComposer,
+      $$PromocionesCategoriasCacheTableCreateCompanionBuilder,
+      $$PromocionesCategoriasCacheTableUpdateCompanionBuilder,
+      (
+        PromocionesCategoriasCacheData,
+        BaseReferences<
+          _$AppDatabase,
+          $PromocionesCategoriasCacheTable,
+          PromocionesCategoriasCacheData
+        >,
+      ),
+      PromocionesCategoriasCacheData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6565,4 +8807,17 @@ class $AppDatabaseManager {
       $$HistorialPedidosTableTableManager(_db, _db.historialPedidos);
   $$HistorialDetallesTableTableManager get historialDetalles =>
       $$HistorialDetallesTableTableManager(_db, _db.historialDetalles);
+  $$PromocionesCacheTableTableManager get promocionesCache =>
+      $$PromocionesCacheTableTableManager(_db, _db.promocionesCache);
+  $$PromocionesProductosCacheTableTableManager get promocionesProductosCache =>
+      $$PromocionesProductosCacheTableTableManager(
+        _db,
+        _db.promocionesProductosCache,
+      );
+  $$PromocionesCategoriasCacheTableTableManager
+  get promocionesCategoriasCache =>
+      $$PromocionesCategoriasCacheTableTableManager(
+        _db,
+        _db.promocionesCategoriasCache,
+      );
 }
