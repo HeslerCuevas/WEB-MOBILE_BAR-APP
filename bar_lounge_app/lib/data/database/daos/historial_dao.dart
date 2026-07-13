@@ -99,6 +99,17 @@ class HistorialDao extends DatabaseAccessor<AppDatabase>
     await delete(historialDetalles).go();
     await delete(historialPedidos).go();
   }
+  /// Removes an order and all its detail rows by [facturaUuid].
+  /// Used by the cancellation window to erase a freshly placed order.
+  Future<void> deleteOrderByUuid(String facturaUuid) async {
+    await (delete(historialDetalles)
+          ..where((d) => d.facturaLocalUuid.equals(facturaUuid)))
+        .go();
+    await (delete(historialPedidos)
+          ..where((o) => o.facturaLocalUuid.equals(facturaUuid)))
+        .go();
+  }
+
   Future<void> syncExistingOrder({
     required int clienteId,
     required int numeroMesa,

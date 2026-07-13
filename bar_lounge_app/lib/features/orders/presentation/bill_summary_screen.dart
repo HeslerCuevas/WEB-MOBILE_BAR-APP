@@ -1060,6 +1060,10 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       );
     }).toList();
 
+    // Snapshot the cart items NOW (before clearCart) so we can restore
+    // them if the user cancels within the 90-second window.
+    final cartSnapshot = List<CarritoLocalData>.from(items);
+
     try {
       if (activeOrder == null) {
         final request = PedidoCreateRequest(
@@ -1104,6 +1108,10 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
             );
           }).toList(),
         );
+
+        // ── Start the 90-second cancellation window ──────────────────────
+        // Only for brand-new orders (not when adding items to an existing one).
+        ref.read(cancellationProvider.notifier).startTimer(uuid, cartSnapshot);
 
       } else {
         final request = AgregarItemsRequest(
@@ -1188,6 +1196,10 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       return;
     }
     setState(() => _paymentPending = true);
+
+    // Stop the cancellation window immediately — payment flow takes over.
+    ref.read(cancellationProvider.notifier).stopTimer();
+
     final api = ref.read(apiServiceProvider);
     final historialDao = ref.read(historialDaoProvider);
     final extraTip =

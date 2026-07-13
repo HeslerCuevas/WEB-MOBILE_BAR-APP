@@ -41,7 +41,9 @@ class ApiClient {
           final path = options.path;
 
           final isAuthEndpoint = path.contains('/auth/registro') ||
-              path.contains('/auth/login');
+              path.contains('/auth/login') ||
+              path.contains('/auth/solicitar-reset') ||
+              path.contains('/auth/confirmar-reset');
 
           if (!isAuthEndpoint) {
             final token = await _storage.read(key: _tokenKey);

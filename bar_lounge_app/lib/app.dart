@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:app_links/app_links.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'data/providers/providers.dart';
@@ -18,6 +20,8 @@ class NocturnalApp extends ConsumerStatefulWidget {
 }
 
 class _NocturnalAppState extends ConsumerState<NocturnalApp> {
+  StreamSubscription<Uri>? _deepLinkSub;
+
   @override
   void initState() {
     super.initState();
@@ -26,12 +30,50 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
     });
     _requestPermissions();
     _setupPaymentListener();
+    _initDeepLinks();
   }
 
   @override
   void dispose() {
+    _deepLinkSub?.cancel();
     ref.read(catalogSyncProvider).stopPeriodicSync();
     super.dispose();
+  }
+
+  // ── Deep links (password reset from email) ────────────────────────────────
+
+  void _initDeepLinks() async {
+    final appLinks = AppLinks();
+
+    // Handle link that launched the app from a cold start
+    try {
+      final initialUri = await appLinks.getInitialLink();
+      if (initialUri != null) {
+        _handleDeepLink(initialUri);
+      }
+    } catch (e) {
+      debugPrint('[DeepLink] Could not get initial link: $e');
+    }
+
+    // Handle links received while the app is already running
+    _deepLinkSub = appLinks.uriLinkStream.listen(
+      (uri) => _handleDeepLink(uri),
+      onError: (e) => debugPrint('[DeepLink] Stream error: $e'),
+    );
+  }
+
+  /// Translates  nocturnalbar://reset-password?token=...  to
+  /// the GoRouter path  /confirm-reset?token=...
+  void _handleDeepLink(Uri uri) {
+    debugPrint('[DeepLink] Received: $uri');
+    if (uri.scheme == 'nocturnalbar' && uri.host == 'reset-password') {
+      final token = uri.queryParameters['token'] ?? '';
+      debugPrint('[DeepLink] Password reset token: ${token.substring(0, token.length.clamp(0, 8))}...');
+      // Small delay so the router is ready if the app is cold-starting
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        appRouter.go('/confirm-reset?token=$token');
+      });
+    }
   }
 
   void _requestPermissions() async {
@@ -103,6 +145,8 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
               '[FCM] Order $uuidRecibido local database updated to state: $finalEstado',
             );
             if (isPaymentSuccess) {
+              // Stop any active cancellation window immediately.
+              ref.read(cancellationProvider.notifier).stopTimer();
               await NotificationService.showNotification(
                 id: uuidRecibido.hashCode,
                 title: 'Payment confirmed',

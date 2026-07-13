@@ -157,7 +157,46 @@ class ApiService {
     return MensajeResponse.fromJson(response.data);
   }
   
+  /// Cancels the order identified by [facturaLocalUuid] within the
+  /// customer self-cancel window.  The server authorises the request via
+  /// the bearer token; no empleado_id is required.
+  Future<void> cancelarPedido(String facturaLocalUuid) async {
+    await _client.dio.post(
+      '/pedidos/$facturaLocalUuid/cancelar',
+      data: {'motivo': 'CLIENTE_CANCELO_VENTANA'},
+    );
+  }
+
   Future<void> logout() async {
     await _client.clearToken();
+  }
+
+
+  // ─── Password Reset ──────────────────────────────────────────────────────
+
+  /// Requests a password reset email for the given [email].
+  /// Returns the generic success message from the server.
+  Future<ResetResponse> solicitarReset(String email) async {
+    final response = await _client.dio.post(
+      '/clientes/auth/solicitar-reset',
+      data: SolicitarResetRequest(email: email).toJson(),
+    );
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Confirms a password reset using the [token] from the deep link
+  /// and sets [passwordNuevo] as the new password.
+  Future<ResetResponse> confirmarReset({
+    required String token,
+    required String passwordNuevo,
+  }) async {
+    final response = await _client.dio.post(
+      '/clientes/auth/confirmar-reset',
+      data: ConfirmarResetRequest(
+        token: token,
+        password_nuevo: passwordNuevo,
+      ).toJson(),
+    );
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
   }
 }

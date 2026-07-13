@@ -4,6 +4,7 @@ import '../../features/auth/presentation/welcome_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/signup_screen.dart';
 import '../../features/auth/presentation/reset_password_screen.dart';
+import '../../features/auth/presentation/confirm_reset_screen.dart';
 import '../../features/auth/presentation/verify_code_screen.dart';
 import '../../features/scanner/presentation/scanner_screen.dart';
 import '../../features/menu/presentation/menu_screen.dart';
@@ -19,7 +20,7 @@ import '../../features/account/presentation/security_privacy_screen.dart';
 
 import '../../shared/widgets/bottom_nav_bar.dart';
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final _rootNavigatorKey  = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter appRouter = GoRouter(
@@ -36,9 +37,20 @@ final GoRouter appRouter = GoRouter(
 
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
 
+    /// "Forgot password" — user enters their email to receive a reset link.
     GoRoute(
       path: '/reset-password',
       builder: (context, state) => const ResetPasswordScreen(),
+    ),
+
+    /// Password confirm screen — reached via deep-link from the reset email.
+    /// nocturnalbar://reset-password?token=<TOKEN>
+    /// GoRouter normalises this to /confirm-reset?token=<TOKEN>
+    GoRoute(
+      path: '/confirm-reset',
+      builder: (context, state) => ConfirmResetScreen(
+        token: state.uri.queryParameters['token'] ?? '',
+      ),
     ),
 
     GoRoute(
@@ -109,7 +121,8 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: '/legal',
           pageBuilder:
-              (context, state) => const NoTransitionPage(child: LegalScreen()),
+              (context, state) =>
+                  const NoTransitionPage(child: LegalScreen()),
         ),
         GoRoute(
           path: '/order-history',

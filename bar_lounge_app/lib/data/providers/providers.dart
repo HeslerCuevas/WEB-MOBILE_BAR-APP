@@ -4,6 +4,7 @@ import '../api/api_client.dart';
 import '../api/services/api_service.dart';
 import '../services/catalog_sync_service.dart';
 import '../services/promotions_eval_service.dart';
+export 'cancellation_provider.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();

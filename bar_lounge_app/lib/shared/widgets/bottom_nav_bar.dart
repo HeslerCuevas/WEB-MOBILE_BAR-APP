@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
+import 'cancellation_banner.dart';
 class ScaffoldWithNavBar extends StatelessWidget {
   final Widget child;
   const ScaffoldWithNavBar({super.key, required this.child});
@@ -18,7 +19,12 @@ class ScaffoldWithNavBar extends StatelessWidget {
     final activeIndex = currentIndex == -1 ? 0 : currentIndex;
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: child,
+      body: Column(
+        children: [
+          const CancellationBanner(),
+          Expanded(child: child),
+        ],
+      ),
       extendBody: true,
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),

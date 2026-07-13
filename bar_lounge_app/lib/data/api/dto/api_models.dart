@@ -651,3 +651,35 @@ class MensajeResponse {
   factory MensajeResponse.fromJson(Map<String, dynamic> json) =>
       MensajeResponse(mensaje: json['mensaje'] as String);
 }
+
+
+// ─── Password Reset DTOs ───────────────────────────────────────────────────
+
+class SolicitarResetRequest {
+  final String email;
+
+  SolicitarResetRequest({required this.email});
+
+  Map<String, dynamic> toJson() => {'email': email};
+}
+
+class ConfirmarResetRequest {
+  final String token;
+  final String password_nuevo;
+
+  ConfirmarResetRequest({required this.token, required this.password_nuevo});
+
+  Map<String, dynamic> toJson() => {
+        'token': token,
+        'password_nuevo': password_nuevo,
+      };
+}
+
+class ResetResponse {
+  final String mensaje;
+
+  ResetResponse({required this.mensaje});
+
+  factory ResetResponse.fromJson(Map<String, dynamic> json) =>
+      ResetResponse(mensaje: json['mensaje'] as String? ?? '');
+}

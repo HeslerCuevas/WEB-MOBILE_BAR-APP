@@ -90,6 +90,34 @@ class CarritoDao extends DatabaseAccessor<AppDatabase> with _$CarritoDaoMixin {
     );
   }
   Future<int> clearCart() => delete(carritoLocal).go();
+
+  /// Inserts an item with a specific [cantidad] (quantity).
+  /// Unlike [addItem], this does **not** merge with an existing row —
+  /// it is intended for cart restoration after a cancellation, where
+  /// [clearCart] has already been called first.
+  Future<void> addItemWithQuantity({
+    required int productoId,
+    required String nombreProducto,
+    required double precioUnitario,
+    required double tasaImpuesto,
+    required int cantidad,
+    String? comentarios,
+  }) async {
+    final subtotal = _roundTo2(precioUnitario * cantidad);
+    final impuesto = _roundTo2(subtotal * tasaImpuesto);
+    await into(carritoLocal).insert(CarritoLocalCompanion.insert(
+      detalleLocalUuid: _uuid.v4(),
+      productoId: productoId,
+      nombreProducto: nombreProducto,
+      precioUnitario: precioUnitario,
+      tasaImpuesto: Value(tasaImpuesto),
+      subtotalLinea: subtotal,
+      montoImpuesto: impuesto,
+      cantidad: Value(cantidad),
+      comentariosCocina: Value(comentarios),
+    ));
+  }
+
   static double _roundTo2(double value) =>
       double.parse(value.toStringAsFixed(2));
 }
