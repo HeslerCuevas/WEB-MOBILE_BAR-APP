@@ -54,6 +54,21 @@ class $SesionClienteTable extends SesionCliente
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _emailVerificadoMeta = const VerificationMeta(
+    'emailVerificado',
+  );
+  @override
+  late final GeneratedColumn<bool> emailVerificado = GeneratedColumn<bool>(
+    'email_verificado',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("email_verificado" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _clienteIdMeta = const VerificationMeta(
     'clienteId',
   );
@@ -109,6 +124,7 @@ class $SesionClienteTable extends SesionCliente
     sessionToken,
     nombreDisplay,
     email,
+    emailVerificado,
     clienteId,
     esInvitado,
     creadoEn,
@@ -151,6 +167,15 @@ class $SesionClienteTable extends SesionCliente
       context.handle(
         _emailMeta,
         email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('email_verificado')) {
+      context.handle(
+        _emailVerificadoMeta,
+        emailVerificado.isAcceptableOrUnknown(
+          data['email_verificado']!,
+          _emailVerificadoMeta,
+        ),
       );
     }
     if (data.containsKey('cliente_id')) {
@@ -204,6 +229,11 @@ class $SesionClienteTable extends SesionCliente
         DriftSqlType.string,
         data['${effectivePrefix}email'],
       ),
+      emailVerificado:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.bool,
+            data['${effectivePrefix}email_verificado'],
+          )!,
       clienteId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}cliente_id'],
@@ -237,6 +267,7 @@ class SesionClienteData extends DataClass
   final String? sessionToken;
   final String nombreDisplay;
   final String? email;
+  final bool emailVerificado;
   final int? clienteId;
   final bool esInvitado;
   final DateTime creadoEn;
@@ -246,6 +277,7 @@ class SesionClienteData extends DataClass
     this.sessionToken,
     required this.nombreDisplay,
     this.email,
+    required this.emailVerificado,
     this.clienteId,
     required this.esInvitado,
     required this.creadoEn,
@@ -262,6 +294,7 @@ class SesionClienteData extends DataClass
     if (!nullToAbsent || email != null) {
       map['email'] = Variable<String>(email);
     }
+    map['email_verificado'] = Variable<bool>(emailVerificado);
     if (!nullToAbsent || clienteId != null) {
       map['cliente_id'] = Variable<int>(clienteId);
     }
@@ -283,6 +316,7 @@ class SesionClienteData extends DataClass
       nombreDisplay: Value(nombreDisplay),
       email:
           email == null && nullToAbsent ? const Value.absent() : Value(email),
+      emailVerificado: Value(emailVerificado),
       clienteId:
           clienteId == null && nullToAbsent
               ? const Value.absent()
@@ -306,6 +340,7 @@ class SesionClienteData extends DataClass
       sessionToken: serializer.fromJson<String?>(json['sessionToken']),
       nombreDisplay: serializer.fromJson<String>(json['nombreDisplay']),
       email: serializer.fromJson<String?>(json['email']),
+      emailVerificado: serializer.fromJson<bool>(json['emailVerificado']),
       clienteId: serializer.fromJson<int?>(json['clienteId']),
       esInvitado: serializer.fromJson<bool>(json['esInvitado']),
       creadoEn: serializer.fromJson<DateTime>(json['creadoEn']),
@@ -320,6 +355,7 @@ class SesionClienteData extends DataClass
       'sessionToken': serializer.toJson<String?>(sessionToken),
       'nombreDisplay': serializer.toJson<String>(nombreDisplay),
       'email': serializer.toJson<String?>(email),
+      'emailVerificado': serializer.toJson<bool>(emailVerificado),
       'clienteId': serializer.toJson<int?>(clienteId),
       'esInvitado': serializer.toJson<bool>(esInvitado),
       'creadoEn': serializer.toJson<DateTime>(creadoEn),
@@ -332,6 +368,7 @@ class SesionClienteData extends DataClass
     Value<String?> sessionToken = const Value.absent(),
     String? nombreDisplay,
     Value<String?> email = const Value.absent(),
+    bool? emailVerificado,
     Value<int?> clienteId = const Value.absent(),
     bool? esInvitado,
     DateTime? creadoEn,
@@ -341,6 +378,7 @@ class SesionClienteData extends DataClass
     sessionToken: sessionToken.present ? sessionToken.value : this.sessionToken,
     nombreDisplay: nombreDisplay ?? this.nombreDisplay,
     email: email.present ? email.value : this.email,
+    emailVerificado: emailVerificado ?? this.emailVerificado,
     clienteId: clienteId.present ? clienteId.value : this.clienteId,
     esInvitado: esInvitado ?? this.esInvitado,
     creadoEn: creadoEn ?? this.creadoEn,
@@ -358,6 +396,10 @@ class SesionClienteData extends DataClass
               ? data.nombreDisplay.value
               : this.nombreDisplay,
       email: data.email.present ? data.email.value : this.email,
+      emailVerificado:
+          data.emailVerificado.present
+              ? data.emailVerificado.value
+              : this.emailVerificado,
       clienteId: data.clienteId.present ? data.clienteId.value : this.clienteId,
       esInvitado:
           data.esInvitado.present ? data.esInvitado.value : this.esInvitado,
@@ -373,6 +415,7 @@ class SesionClienteData extends DataClass
           ..write('sessionToken: $sessionToken, ')
           ..write('nombreDisplay: $nombreDisplay, ')
           ..write('email: $email, ')
+          ..write('emailVerificado: $emailVerificado, ')
           ..write('clienteId: $clienteId, ')
           ..write('esInvitado: $esInvitado, ')
           ..write('creadoEn: $creadoEn, ')
@@ -387,6 +430,7 @@ class SesionClienteData extends DataClass
     sessionToken,
     nombreDisplay,
     email,
+    emailVerificado,
     clienteId,
     esInvitado,
     creadoEn,
@@ -400,6 +444,7 @@ class SesionClienteData extends DataClass
           other.sessionToken == this.sessionToken &&
           other.nombreDisplay == this.nombreDisplay &&
           other.email == this.email &&
+          other.emailVerificado == this.emailVerificado &&
           other.clienteId == this.clienteId &&
           other.esInvitado == this.esInvitado &&
           other.creadoEn == this.creadoEn &&
@@ -411,6 +456,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
   final Value<String?> sessionToken;
   final Value<String> nombreDisplay;
   final Value<String?> email;
+  final Value<bool> emailVerificado;
   final Value<int?> clienteId;
   final Value<bool> esInvitado;
   final Value<DateTime> creadoEn;
@@ -420,6 +466,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
     this.sessionToken = const Value.absent(),
     this.nombreDisplay = const Value.absent(),
     this.email = const Value.absent(),
+    this.emailVerificado = const Value.absent(),
     this.clienteId = const Value.absent(),
     this.esInvitado = const Value.absent(),
     this.creadoEn = const Value.absent(),
@@ -430,6 +477,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
     this.sessionToken = const Value.absent(),
     this.nombreDisplay = const Value.absent(),
     this.email = const Value.absent(),
+    this.emailVerificado = const Value.absent(),
     this.clienteId = const Value.absent(),
     this.esInvitado = const Value.absent(),
     this.creadoEn = const Value.absent(),
@@ -440,6 +488,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
     Expression<String>? sessionToken,
     Expression<String>? nombreDisplay,
     Expression<String>? email,
+    Expression<bool>? emailVerificado,
     Expression<int>? clienteId,
     Expression<bool>? esInvitado,
     Expression<DateTime>? creadoEn,
@@ -450,6 +499,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
       if (sessionToken != null) 'session_token': sessionToken,
       if (nombreDisplay != null) 'nombre_display': nombreDisplay,
       if (email != null) 'email': email,
+      if (emailVerificado != null) 'email_verificado': emailVerificado,
       if (clienteId != null) 'cliente_id': clienteId,
       if (esInvitado != null) 'es_invitado': esInvitado,
       if (creadoEn != null) 'creado_en': creadoEn,
@@ -462,6 +512,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
     Value<String?>? sessionToken,
     Value<String>? nombreDisplay,
     Value<String?>? email,
+    Value<bool>? emailVerificado,
     Value<int?>? clienteId,
     Value<bool>? esInvitado,
     Value<DateTime>? creadoEn,
@@ -472,6 +523,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
       sessionToken: sessionToken ?? this.sessionToken,
       nombreDisplay: nombreDisplay ?? this.nombreDisplay,
       email: email ?? this.email,
+      emailVerificado: emailVerificado ?? this.emailVerificado,
       clienteId: clienteId ?? this.clienteId,
       esInvitado: esInvitado ?? this.esInvitado,
       creadoEn: creadoEn ?? this.creadoEn,
@@ -493,6 +545,9 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
     }
     if (email.present) {
       map['email'] = Variable<String>(email.value);
+    }
+    if (emailVerificado.present) {
+      map['email_verificado'] = Variable<bool>(emailVerificado.value);
     }
     if (clienteId.present) {
       map['cliente_id'] = Variable<int>(clienteId.value);
@@ -516,6 +571,7 @@ class SesionClienteCompanion extends UpdateCompanion<SesionClienteData> {
           ..write('sessionToken: $sessionToken, ')
           ..write('nombreDisplay: $nombreDisplay, ')
           ..write('email: $email, ')
+          ..write('emailVerificado: $emailVerificado, ')
           ..write('clienteId: $clienteId, ')
           ..write('esInvitado: $esInvitado, ')
           ..write('creadoEn: $creadoEn, ')

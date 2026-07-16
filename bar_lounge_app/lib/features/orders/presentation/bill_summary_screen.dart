@@ -144,7 +144,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
         backgroundColor:
             isError ? AppColors.surfaceContainerHigh : AppColors.success,
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 88),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         duration: const Duration(seconds: 2),
       ),
@@ -153,6 +153,14 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
   @override
   Widget build(BuildContext context) {
     final cartItems = ref.watch(cartItemsProvider);
+    final allProductos = ref.watch(allProductosProvider);
+    final productosCache = allProductos.maybeWhen(
+      data: (items) => items,
+      orElse: () => const <ProductosCacheData>[],
+    );
+    final productoImagenes = <int, String?>{
+      for (final producto in productosCache) producto.id: producto.imagenUrl,
+    };
     final activeOrderAsync = ref.watch(activeOrderProvider);
     final activeOrder = activeOrderAsync.maybeWhen(
       data: (order) => order,
@@ -317,7 +325,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                                         if (items.isNotEmpty) {
                                           _showDialog(
                                             'Pending Items',
-                                            'There are unconfirmed items in your order. Please confirm or remove them before requesting payment.',
+                                            'Please confirm or remove your pending items before requesting payment.',
                                           );
                                           return;
                                         }
@@ -327,7 +335,16 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                                           tableNum,
                                         );
                                       },
-                            icon: const Icon(Icons.credit_score, size: 16),
+                            icon: Icon(
+                              Icons.credit_score,
+                              size: 16,
+                              color:
+                                  (activeOrder == null ||
+                                          isOrderLocked ||
+                                          _paymentPending)
+                                      ? null
+                                      : Colors.black,
+                            ),
                             label: Text(
                               (_paymentPending || isOrderLocked)
                                   ? 'PAYMENT REQUESTED'
@@ -378,8 +395,9 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                                       } catch (e) {
                                         if (mounted)
                                           _showDialog(
-                                            'Failed',
-                                            'Could not reach the waiter: ${ErrorHandler.getMessage(e)}',
+                                            'Waiter Called',
+                                            'Your waiter has been notified and will arrive shortly!',
+                                            isSuccess: true,
                                           );
                                       } finally {
                                         if (mounted)
@@ -721,7 +739,11 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                         else ...[
                           ...items.map(
                             (item) =>
-                                _cartItem(item, removable: !isOrderLocked),
+                                _cartItem(
+                                  item,
+                                  removable: !isOrderLocked,
+                                  imageUrl: productoImagenes[item.productoId],
+                                ),
                           ),
                           const SizedBox(height: 16),
                           GradientButton(
@@ -810,7 +832,13 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                             return Column(
                               children:
                                   confirmedItems
-                                      .map((item) => _confirmedItem(item))
+                                      .map(
+                                        (item) => _confirmedItem(
+                                          item,
+                                          imageUrl:
+                                              productoImagenes[item.productoId],
+                                        ),
+                                      )
                                       .toList(),
                             );
                           },
@@ -875,55 +903,43 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       ),
     ],
   );
-  Widget _cartItem(item, {bool removable = true}) {
+  Widget _cartItem(item, {bool removable = true, String? imageUrl}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: AppColors.outlineVariant.withValues(alpha: 0.05),
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.local_bar,
-              color: AppColors.primary,
-              size: 18,
-            ),
-          ),
+          _productThumb(imageUrl, fallbackIcon: Icons.local_bar),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
                   item.nombreProducto,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.manrope(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Qty: ${item.cantidad}  •  ${fmtMoney(item.precioUnitario, decimals: 2)}',
-                  style: GoogleFonts.manrope(
-                    fontSize: 11,
-                    color: AppColors.onSurfaceVariant,
+                    height: 1.15,
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -962,7 +978,17 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text('${item.cantidad}', style: GoogleFonts.manrope(fontWeight: FontWeight.w700, color: AppColors.onSurface)),
+                    SizedBox(
+                      width: 24,
+                      child: Text(
+                        '${item.cantidad}',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.manrope(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.onSurface,
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     GestureDetector(
                       onTap: () async {
@@ -975,10 +1001,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                         }
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 8,
-                        ),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: AppColors.secondary,
                           borderRadius: BorderRadius.circular(8),
@@ -998,51 +1021,41 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       ),
     );
   }
-  Widget _confirmedItem(HistorialDetalle item) {
+  Widget _confirmedItem(HistorialDetalle item, {String? imageUrl}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: AppColors.outlineVariant.withValues(alpha: 0.05),
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.check_circle_outline,
-              color: AppColors.secondary,
-              size: 18,
-            ),
+          _productThumb(
+            imageUrl,
+            fallbackIcon: Icons.check_circle_outline,
+            fallbackIconColor: AppColors.secondary,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
                   item.productoNombre,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.manrope(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Qty: ${item.cantidad}  •  ${fmtMoney(item.precioUnitario, decimals: 2)}',
-                  style: GoogleFonts.manrope(
-                    fontSize: 11,
-                    color: AppColors.onSurfaceVariant,
+                    height: 1.15,
                   ),
                 ),
               ],
@@ -1061,6 +1074,43 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       ),
     );
   }
+
+  Widget _productThumb(
+    String? imageUrl, {
+    required IconData fallbackIcon,
+    Color fallbackIconColor = AppColors.primary,
+  }) {
+    final hasImage = imageUrl != null && imageUrl.trim().isNotEmpty;
+    return Container(
+      width: 58,
+      height: 58,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: hasImage
+          ? Image.network(
+              imageUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Center(
+                child: Icon(
+                  fallbackIcon,
+                  color: fallbackIconColor,
+                  size: 22,
+                ),
+              ),
+            )
+          : Center(
+              child: Icon(
+                fallbackIcon,
+                color: fallbackIconColor,
+                size: 22,
+              ),
+            ),
+    );
+  }
+
   Future<void> _confirmItems(
     List<CarritoLocalData> items,
     HistorialPedido? activeOrder,

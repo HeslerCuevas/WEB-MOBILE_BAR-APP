@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/providers/providers.dart';
 import '../../../data/database/app_database.dart';
+import '../../account/presentation/widgets/account_page_scaffold.dart';
 class OrderHistoryScreen extends ConsumerStatefulWidget {
   const OrderHistoryScreen({super.key});
   @override
@@ -24,118 +25,96 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   Widget build(BuildContext context) {
     final ordersAsync = ref.watch(ordersProvider);
     final allDetailsAsync = ref.watch(allOrderDetailsProvider);
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return AccountPageScaffold(
+      title: 'Past Sessions',
+      brandText: normalizeBrandText(),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+      children: [
+        Text(
+          "Your curated journey through Nocturnal's finest pours.",
+          style: GoogleFonts.manrope(
+            fontSize: 13,
+            color: AppColors.onSurfaceVariant,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Row(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        context.go('/account');
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.arrow_back, color: AppColors.primary, size: 20),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'ORDER HISTORY',
-                    style: GoogleFonts.epilogue(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.primary,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => setState(() {
-                      _showSearch = !_showSearch;
-                      if (!_showSearch) {
-                        _searchQuery = '';
-                        _searchController.clear();
-                      }
-                    }),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: _showSearch ? AppColors.primaryContainer : AppColors.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.search,
-                        color: _showSearch ? AppColors.onPrimaryContainer : AppColors.onSurface,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 200),
-              child: _showSearch
-                  ? Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
-                        style: GoogleFonts.manrope(color: AppColors.onSurface, fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: 'Search by product name...',
-                          hintStyle: GoogleFonts.manrope(color: AppColors.onSurfaceVariant, fontSize: 14),
-                          prefixIcon: const Icon(Icons.search, color: AppColors.onSurfaceVariant, size: 18),
-                          filled: true,
-                          fillColor: AppColors.surfaceContainerHigh,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 4),
-              child: Text(
-                'Past Sessions',
-                style: GoogleFonts.epilogue(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.onSurface,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: Text(
-                "Your curated journey through Nocturnal's finest pours.",
-                style: GoogleFonts.manrope(
-                  fontSize: 13,
-                  color: AppColors.onSurfaceVariant,
-                  height: 1.4,
-                ),
-              ),
-            ),
             Expanded(
-              child: ordersAsync.when(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                child:
+                    _showSearch
+                        ? TextField(
+                          controller: _searchController,
+                          onChanged:
+                              (v) => setState(
+                                () => _searchQuery = v.toLowerCase(),
+                              ),
+                          style: GoogleFonts.manrope(
+                            color: AppColors.onSurface,
+                            fontSize: 14,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Search by product name...',
+                            hintStyle: GoogleFonts.manrope(
+                              color: AppColors.onSurfaceVariant,
+                              fontSize: 14,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.search,
+                              color: AppColors.onSurfaceVariant,
+                              size: 18,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.surfaceContainerHigh,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                            ),
+                          ),
+                        )
+                        : const SizedBox.shrink(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: () => setState(() {
+                _showSearch = !_showSearch;
+                if (!_showSearch) {
+                  _searchQuery = '';
+                  _searchController.clear();
+                }
+              }),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color:
+                      _showSearch
+                          ? AppColors.primaryContainer
+                          : AppColors.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.search,
+                  color:
+                      _showSearch
+                          ? AppColors.onPrimaryContainer
+                          : AppColors.onSurface,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.58,
+          child: ordersAsync.when(
                 data: (orders) {
                   if (orders.isEmpty) {
                     return _emptyState();
@@ -161,7 +140,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                         );
                       }
                       return ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 120),
+                        padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 16),
                         itemBuilder: (_, i) {
@@ -175,13 +154,20 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                     error: (e, __) => Center(child: Text('Error: $e', style: TextStyle(color: AppColors.error))),
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                error: (e, __) => Center(child: Text('Error: $e', style: TextStyle(color: AppColors.error))),
+                loading:
+                    () => const Center(
+                      child: CircularProgressIndicator(color: AppColors.primary),
+                    ),
+                error:
+                    (e, __) => Center(
+                      child: Text(
+                        'Error: $e',
+                        style: const TextStyle(color: AppColors.error),
+                      ),
+                    ),
               ),
-            ),
-          ],
         ),
-      ),
+      ],
     );
   }
   Widget _emptyState() {

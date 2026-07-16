@@ -115,6 +115,7 @@ class _CancellationBannerState extends ConsumerState<CancellationBanner>
   }
 
   Widget _buildBanner(BuildContext context, CancellationState state) {
+    final topInset = MediaQuery.of(context).padding.top;
     // Urgent colour shift: when < 15 s left, tint danger
     final isUrgent = state.secondsLeft <= 15;
     final accentColor =
@@ -124,8 +125,8 @@ class _CancellationBannerState extends ConsumerState<CancellationBanner>
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: EdgeInsets.fromLTRB(12, topInset + 4, 12, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
@@ -165,9 +166,9 @@ class _CancellationBannerState extends ConsumerState<CancellationBanner>
                     Text(
                       'PENDING ORDER',
                       style: GoogleFonts.epilogue(
-                        fontSize: 10,
+                        fontSize: 9,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 1.8,
+                        letterSpacing: 1.4,
                         color: accentColor,
                       ),
                     ),
@@ -181,7 +182,7 @@ class _CancellationBannerState extends ConsumerState<CancellationBanner>
                   child: Text(
                     state.formattedTime,
                     style: GoogleFonts.epilogue(
-                      fontSize: 28,
+                      fontSize: 24,
                       fontWeight: FontWeight.w900,
                       color: timerColor,
                       height: 1.0,
@@ -193,9 +194,9 @@ class _CancellationBannerState extends ConsumerState<CancellationBanner>
 
                 // Subtitle
                 Text(
-                  'You have a brief window to cancel before preparation begins.',
+                  'Cancel before preparation starts.',
                   style: GoogleFonts.manrope(
-                    fontSize: 10,
+                    fontSize: 9,
                     color: AppColors.onSurfaceVariant.withValues(alpha: 0.65),
                     height: 1.3,
                   ),
@@ -208,11 +209,11 @@ class _CancellationBannerState extends ConsumerState<CancellationBanner>
 
           // ── Right: Cancel button ─────────────────────────────────────────
           SizedBox(
-            height: 38,
+            height: 42,
             child: _cancelling
                 ? const SizedBox(
-                    width: 38,
-                    height: 38,
+                    width: 42,
+                    height: 42,
                     child: Center(
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
@@ -236,14 +237,14 @@ class _CancellationBannerState extends ConsumerState<CancellationBanner>
                       backgroundColor:
                           AppColors.error.withValues(alpha: 0.08),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 0),
+                          horizontal: 16, vertical: 0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: Text(
-                      'Cancel\nOrder',
+                      'Cancel\nNow',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.epilogue(
                         fontSize: 10,

@@ -3,18 +3,17 @@ import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import '../../../core/utils/error_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../data/providers/providers.dart';
-import '../../../data/api/dto/api_models.dart';
 import '../../../shared/widgets/gradient_button.dart';
 import 'widgets/account_page_scaffold.dart';
 
@@ -56,9 +55,7 @@ class _AccountProfileScreenState extends ConsumerState<AccountProfileScreen> {
 
   Future<void> _loadAvatar({required int? clienteId, required String email}) async {
     final storageKey = _avatarStorageKey(clienteId: clienteId, email: email);
-    final path = await _storage.read(
-      key: storageKey,
-    );
+    final path = await _storage.read(key: storageKey);
     if (!mounted) return;
     setState(() {
       _loadedAvatarKey = storageKey;
@@ -128,136 +125,56 @@ class _AccountProfileScreenState extends ConsumerState<AccountProfileScreen> {
     return null;
   }
 
-  /// Saves the updated name to CORE via the API.
   Future<void> _saveChanges() async {
     final newName = _nameCtrl.text.trim();
     if (newName.isEmpty) {
-      setState(() { _saveError = 'Name cannot be empty.'; _saveSuccess = null; });
+      setState(() {
+        _saveError = 'Name cannot be empty.';
+        _saveSuccess = null;
+      });
       return;
     }
-    if (newName.length > 150) {
-      setState(() { _saveError = 'Name must be 150 characters or fewer.'; _saveSuccess = null; });
+    if (newName.length > 100) {
+      setState(() {
+        _saveError = 'Name must be 100 characters or fewer.';
+        _saveSuccess = null;
+      });
       return;
     }
 
-    setState(() { _saving = true; _saveError = null; _saveSuccess = null; });
+    setState(() {
+      _saving = true;
+      _saveError = null;
+      _saveSuccess = null;
+    });
 
     try {
       final result = await ref.read(apiServiceProvider).actualizarPerfil(newName);
-      // Update the local session so the rest of the app reflects the new name
       await ref.read(sesionDaoProvider).updateNombre(result.nombre_completo);
       if (mounted) {
         setState(() => _saveSuccess = 'Profile updated successfully!');
       }
     } on DioException catch (e) {
-      setState(() => _saveError = ErrorHandler.getMessage(e, fallback: 'Could not save changes. Please try again.'));
+      if (mounted) {
+        setState(() {
+          _saveError = ErrorHandler.getMessage(
+            e,
+            fallback: 'Could not save changes. Please try again.',
+          );
+        });
+      }
     } catch (e) {
-      setState(() => _saveError = ErrorHandler.getMessage(e, fallback: 'Could not save changes. Please try again.'));
+      if (mounted) {
+        setState(() {
+          _saveError = ErrorHandler.getMessage(
+            e,
+            fallback: 'Could not save changes. Please try again.',
+          );
+        });
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  /// Shows a dialog to initiate the email change flow.
-  Future<void> _showChangeEmailDialog(BuildContext context) async {
-    final newEmailCtrl = TextEditingController();
-    final passCtrl     = TextEditingController();
-    bool obscure = true;
-    bool loading = false;
-    String? dialogError;
-
-    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]{2,}$');
-
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (_, setDialogState) => AlertDialog(
-          backgroundColor: AppColors.surfaceContainerHigh,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            'Change Email',
-            style: GoogleFonts.epilogue(fontWeight: FontWeight.w800, color: AppColors.onSurface),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Enter your new email address and current password. '
-                'Confirmation emails will be sent to both addresses — '
-                'your email will only update after both are confirmed.',
-                style: GoogleFonts.manrope(fontSize: 13, color: AppColors.onSurfaceVariant, height: 1.5),
-              ),
-              const SizedBox(height: 18),
-              Text('NEW EMAIL ADDRESS', style: GoogleFonts.manrope(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.onSurfaceVariant)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: newEmailCtrl,
-                keyboardType: TextInputType.emailAddress,
-                style: GoogleFonts.manrope(color: AppColors.onSurface, fontSize: 14),
-                decoration: const InputDecoration(
-                  hintText: 'new@example.com',
-                  prefixIcon: Icon(Icons.mail_outline, color: AppColors.outline),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text('CURRENT PASSWORD', style: GoogleFonts.manrope(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.onSurfaceVariant)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: passCtrl,
-                obscureText: obscure,
-                style: GoogleFonts.manrope(color: AppColors.onSurface, fontSize: 14),
-                decoration: InputDecoration(
-                    hintText: '••••••••',
-                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: AppColors.outline),
-                    onPressed: () => setDialogState(() => obscure = !obscure),
-                  ),
-                ),
-              ),
-              if (dialogError != null) ...[const SizedBox(height: 10), Text(dialogError!, style: GoogleFonts.manrope(fontSize: 12, color: AppColors.error))],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: loading ? null : () => Navigator.of(dialogContext).pop(),
-              child: Text('Cancel', style: GoogleFonts.manrope(color: AppColors.onSurfaceVariant)),
-            ),
-            TextButton(
-              onPressed: loading ? null : () async {
-                final ne = newEmailCtrl.text.trim().toLowerCase();
-                final pw = passCtrl.text.trim();
-                if (ne.isEmpty || pw.isEmpty) { setDialogState(() => dialogError = 'Fill in all fields.'); return; }
-                if (!emailRegex.hasMatch(ne)) { setDialogState(() => dialogError = 'Enter a valid email address.'); return; }
-                setDialogState(() { loading = true; dialogError = null; });
-                try {
-                  await ref.read(apiServiceProvider).solicitarCambioEmail(nuevoEmail: ne, passwordActual: pw);
-                  if (dialogContext.mounted) Navigator.of(dialogContext).pop();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('Confirmation emails sent! Check both inboxes and tap both links to complete the change.', style: GoogleFonts.manrope(fontSize: 13)),
-                      backgroundColor: AppColors.surfaceContainerHigh,
-                      duration: const Duration(seconds: 7),
-                    ));
-                  }
-                } on DioException catch (e) {
-                  setDialogState(() { loading = false; dialogError = ErrorHandler.getMessage(e, fallback: 'Could not send confirmation. Please try again.'); });
-                } catch (e) {
-                  setDialogState(() { loading = false; dialogError = ErrorHandler.getMessage(e, fallback: 'Could not send confirmation. Please try again.'); });
-                }
-              },
-              child: loading
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(AppColors.primary)))
-                  : Text('Send Confirmation', style: GoogleFonts.manrope(color: AppColors.primary, fontWeight: FontWeight.w700)),
-            ),
-          ],
-        ),
-      ),
-    );
-    newEmailCtrl.dispose();
-    passCtrl.dispose();
   }
 
   @override
@@ -284,7 +201,7 @@ class _AccountProfileScreenState extends ConsumerState<AccountProfileScreen> {
         }
       });
     }
-    // Pre-fill name only once
+
     if (_nameCtrl.text.isEmpty && displayName != 'Loading...') {
       _nameCtrl.text = displayName;
     }
@@ -306,37 +223,51 @@ class _AccountProfileScreenState extends ConsumerState<AccountProfileScreen> {
           child: GestureDetector(
             onTap: () => _pickAvatar(clienteId: clienteId, email: email),
             child: Stack(
+              alignment: Alignment.center,
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  width: 112,
-                  height: 112,
-                  decoration: BoxDecoration(
+                  width: 110,
+                  height: 110,
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.surfaceContainerHighest,
-                    border: Border.all(color: AppColors.surfaceVariant),
+                    gradient: AppColors.amberGlow,
                   ),
-                  child: ClipOval(
-                    child:
-                        _avatarPath == null
-                            ? const Icon(
-                              Icons.person_outline,
-                              color: AppColors.primary,
-                              size: 64,
+                ),
+                CircleAvatar(
+                  radius: 52,
+                  backgroundColor: AppColors.background,
+                  child:
+                      _avatarPath == null
+                          ? Text(
+                              displayName.isNotEmpty
+                                  ? displayName[0].toUpperCase()
+                                  : 'G',
+                              style: GoogleFonts.epilogue(
+                                fontSize: 36,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primary,
+                              ),
                             )
-                            : Image.file(
-                              File(_avatarPath!),
-                              width: 112,
-                              height: 112,
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (_, __, ___) => const Icon(
-                                    Icons.person_outline,
-                                    color: AppColors.primary,
-                                    size: 64,
-                                  ),
+                          : ClipOval(
+                              child: Image.file(
+                                File(_avatarPath!),
+                                width: 104,
+                                height: 104,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (_, __, ___) => Text(
+                                      displayName.isNotEmpty
+                                          ? displayName[0].toUpperCase()
+                                          : 'G',
+                                      style: GoogleFonts.epilogue(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                              ),
                             ),
-                  ),
                 ),
                 Positioned(
                   right: -2,
@@ -371,7 +302,7 @@ class _AccountProfileScreenState extends ConsumerState<AccountProfileScreen> {
               const SizedBox(height: 10),
               TextField(
                 controller: _nameCtrl,
-                maxLength: 150,
+                maxLength: 100,
                 style: GoogleFonts.manrope(
                   color: AppColors.onSurface,
                   fontSize: 14,
@@ -386,120 +317,143 @@ class _AccountProfileScreenState extends ConsumerState<AccountProfileScreen> {
               ),
               const SizedBox(height: 18),
               accountSectionLabel('EMAIL ADDRESS'),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: TextEditingController(text: email),
-                      enabled: false,
-                      style: GoogleFonts.manrope(
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 15,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainer,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.surfaceVariant.withValues(alpha: 0.45),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 2),
+                      child: Icon(
+                        Icons.mail_outline,
                         color: AppColors.onSurfaceVariant,
-                        fontSize: 14,
+                        size: 18,
                       ),
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(
-                          Icons.mail_outline,
-                          color: AppColors.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        email.isEmpty ? 'No email available' : email,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.manrope(
+                          color: AppColors.onSurface,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  OutlinedButton(
-                    onPressed: () => _showChangeEmailDialog(context),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: AppColors.primary),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                    ),
-                    child: Text(
-                      'Change',
-                      style: GoogleFonts.manrope(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 18),
               Divider(color: Colors.white.withValues(alpha: 0.06)),
               const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        accountSectionLabel('SECURITY'),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Update your access credentials',
-                          style: GoogleFonts.manrope(
-                            fontSize: 14,
-                            color: AppColors.onSurface,
-                            height: 1.35,
-                          ),
-                        ),
-                      ],
-                    ),
+              accountSectionLabel('SECURITY'),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainer,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.surfaceVariant.withValues(alpha: 0.45),
                   ),
-                  const SizedBox(width: 14),
-                  // Route to authenticated change-password screen
-                  OutlinedButton.icon(
-                    onPressed: () => context.push('/account/change-password'),
-                    icon: const Icon(Icons.lock_reset, size: 20),
-                    label: const Text('Change\nPassword'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.onSurface,
-                      side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.1),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      textStyle: GoogleFonts.manrope(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Manage password, email changes, and account protection settings.',
+                      style: GoogleFonts.manrope(
+                        fontSize: 14,
+                        color: AppColors.onSurface,
+                        height: 1.35,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: _profileActionButton(
+                        label: 'Open Security Settings',
+                        icon: Icons.shield_outlined,
+                        onPressed: () => context.push('/account/security'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-        // ── Save/discard status ──────────────────────────────────────────────
-        if (_saveError != null) ...[const SizedBox(height: 12), Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-          child: Row(children: [
-            const Icon(Icons.error_outline, color: AppColors.error, size: 16),
-            const SizedBox(width: 8),
-            Expanded(child: Text(_saveError!, style: GoogleFonts.manrope(fontSize: 12, color: AppColors.error))),
-          ]),
-        )],
-        if (_saveSuccess != null) ...[const SizedBox(height: 12), Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: const Color(0xFF4CAF50).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-          child: Row(children: [
-            const Icon(Icons.check_circle_outline, color: Color(0xFF4CAF50), size: 16),
-            const SizedBox(width: 8),
-            Expanded(child: Text(_saveSuccess!, style: GoogleFonts.manrope(fontSize: 12, color: Color(0xFF4CAF50)))),
-          ]),
-        )],
+        if (_saveError != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.error_outline, color: AppColors.error, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _saveError!,
+                    style: GoogleFonts.manrope(
+                      fontSize: 12,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (_saveSuccess != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_outline,
+                  color: Color(0xFF4CAF50),
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _saveSuccess!,
+                    style: GoogleFonts.manrope(
+                      fontSize: 12,
+                      color: const Color(0xFF4CAF50),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 26),
         GradientButton(
           text: _saving ? 'SAVING...' : 'SAVE CHANGES',
@@ -512,7 +466,10 @@ class _AccountProfileScreenState extends ConsumerState<AccountProfileScreen> {
           child: OutlinedButton(
             onPressed: () {
               _nameCtrl.text = displayName;
-              setState(() { _saveError = null; _saveSuccess = null; });
+              setState(() {
+                _saveError = null;
+                _saveSuccess = null;
+              });
             },
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.onSurface,
@@ -535,4 +492,31 @@ class _AccountProfileScreenState extends ConsumerState<AccountProfileScreen> {
       ],
     );
   }
+
+}
+
+Widget _profileActionButton({
+  required String label,
+  required IconData icon,
+  required VoidCallback onPressed,
+}) {
+  return OutlinedButton.icon(
+    onPressed: onPressed,
+    icon: Icon(icon, size: 18),
+    label: Text(label),
+    style: OutlinedButton.styleFrom(
+      foregroundColor: AppColors.primary,
+      side: BorderSide(color: AppColors.primary.withValues(alpha: 0.65)),
+      backgroundColor: AppColors.primary.withValues(alpha: 0.08),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      textStyle: GoogleFonts.manrope(
+        fontSize: 13,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.4,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
+  );
 }

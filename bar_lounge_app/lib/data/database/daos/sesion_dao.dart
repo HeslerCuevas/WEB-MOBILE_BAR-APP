@@ -19,13 +19,16 @@ class SesionDao extends DatabaseAccessor<AppDatabase> with _$SesionDaoMixin {
     required String token,
     required String nombre,
     String? email,
+    bool emailVerificado = false,
     int? clienteId,
-  }) {
+  }) async {
+    await clearSessions();
     return into(sesionCliente).insertReturning(
       SesionClienteCompanion.insert(
         sessionToken: Value(token),
         nombreDisplay: Value(nombre),
         email: Value(email),
+        emailVerificado: Value(emailVerificado),
         clienteId: Value(clienteId),
         esInvitado: const Value(false),
       ),
@@ -34,14 +37,14 @@ class SesionDao extends DatabaseAccessor<AppDatabase> with _$SesionDaoMixin {
 
   Future<SesionClienteData?> getActiveSession() {
     return (select(sesionCliente)
-          ..orderBy([(t) => OrderingTerm.desc(t.creadoEn)])
+          ..orderBy([(t) => OrderingTerm.desc(t.id)])
           ..limit(1))
         .getSingleOrNull();
   }
 
   Stream<SesionClienteData?> watchActiveSession() {
     return (select(sesionCliente)
-          ..orderBy([(t) => OrderingTerm.desc(t.creadoEn)])
+          ..orderBy([(t) => OrderingTerm.desc(t.id)])
           ..limit(1))
         .watchSingleOrNull();
   }
@@ -51,6 +54,27 @@ class SesionDao extends DatabaseAccessor<AppDatabase> with _$SesionDaoMixin {
     if (session != null) {
       await update(sesionCliente).replace(
         session.copyWith(nombreDisplay: nombre),
+      );
+    }
+  }
+
+  Future<void> updateEmailVerification(bool emailVerificado) async {
+    final session = await getActiveSession();
+    if (session != null) {
+      await update(sesionCliente).replace(
+        session.copyWith(emailVerificado: emailVerificado),
+      );
+    }
+  }
+
+  Future<void> updateEmail(String email, {bool? emailVerificado}) async {
+    final session = await getActiveSession();
+    if (session != null) {
+      await update(sesionCliente).replace(
+        session.copyWith(
+          email: Value(email),
+          emailVerificado: emailVerificado ?? session.emailVerificado,
+        ),
       );
     }
   }

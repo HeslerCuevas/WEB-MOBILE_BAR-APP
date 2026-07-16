@@ -28,12 +28,12 @@ class CarritoDao extends DatabaseAccessor<AppDatabase> with _$CarritoDaoMixin {
         );
       }
 
-      if (newQty > 25) {
-        throw Exception('You can add up to 25 of the same item.');
+      if (newQty > 20) {
+        throw Exception('You can add up to 20 of the same item.');
       }
       final currentTotal = await _getTotalQuantity();
-      if (currentTotal + 1 > 50) {
-        throw Exception('Maximum combined quantity per order is 50.');
+      if (currentTotal + 1 > 60) {
+        throw Exception('You can add up to 60 items in one order.');
       }
 
       final subtotal = _roundTo2(precioUnitario * newQty);
@@ -50,8 +50,8 @@ class CarritoDao extends DatabaseAccessor<AppDatabase> with _$CarritoDaoMixin {
         throw Exception('This item is out of stock right now.');
       }
       final currentTotal = await _getTotalQuantity();
-      if (currentTotal + 1 > 50) {
-        throw Exception('Maximum combined quantity per order is 50.');
+      if (currentTotal + 1 > 60) {
+        throw Exception('You can add up to 60 items in one order.');
       }
 
       final subtotal = _roundTo2(precioUnitario * 1);
@@ -73,8 +73,8 @@ class CarritoDao extends DatabaseAccessor<AppDatabase> with _$CarritoDaoMixin {
       await (delete(carritoLocal)..where((c) => c.id.equals(id))).go();
       return;
     }
-    if (newQty > 25) {
-      throw Exception('You can add up to 25 of the same item.');
+    if (newQty > 20) {
+      throw Exception('You can add up to 20 of the same item.');
     }
 
     final item = await (select(carritoLocal)..where((c) => c.id.equals(id))).getSingle();
@@ -89,8 +89,8 @@ class CarritoDao extends DatabaseAccessor<AppDatabase> with _$CarritoDaoMixin {
     final diff = newQty - item.cantidad;
     if (diff > 0) {
       final currentTotal = await _getTotalQuantity();
-      if (currentTotal + diff > 50) {
-        throw Exception('Maximum combined quantity per order is 50.');
+      if (currentTotal + diff > 60) {
+        throw Exception('You can add up to 60 items in one order.');
       }
     }
     final subtotal = _roundTo2(item.precioUnitario * newQty);

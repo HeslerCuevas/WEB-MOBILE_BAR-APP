@@ -40,11 +40,13 @@ class RegistroResponse {
   final String mensaje;
   final int cliente_id;
   final String email;
+  final bool email_verificado;
   
   RegistroResponse({
     required this.mensaje,
     required this.cliente_id,
     required this.email,
+    required this.email_verificado,
   });
 
   factory RegistroResponse.fromJson(Map<String, dynamic> json) =>
@@ -52,6 +54,7 @@ class RegistroResponse {
         mensaje: json['mensaje'] as String,
         cliente_id: json['cliente_id'] as int,
         email: json['email'] as String,
+        email_verificado: json['email_verificado'] as bool? ?? false,
       );
 }
 
@@ -74,6 +77,8 @@ class LoginResponse {
   final String canal;
   final int cliente_id;
   final String nombre_completo;
+  final String email;
+  final bool email_verificado;
 
   LoginResponse({
     required this.access_token,
@@ -81,6 +86,8 @@ class LoginResponse {
     required this.canal,
     required this.cliente_id,
     required this.nombre_completo,
+    required this.email,
+    required this.email_verificado,
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) => LoginResponse(
@@ -89,6 +96,8 @@ class LoginResponse {
         canal: json['canal'] as String,
         cliente_id: json['cliente_id'] as int,
         nombre_completo: json['nombre_completo'] as String,
+        email: json['email'] as String? ?? '',
+        email_verificado: json['email_verificado'] as bool? ?? false,
       );
 }
 
@@ -687,6 +696,35 @@ class ResetResponse {
       ResetResponse(mensaje: json['mensaje'] as String? ?? '');
 }
 
+class ConfirmarResetOtpRequest {
+  final String email;
+  final String codigo;
+  final String password_nuevo;
+  final String password_nuevo_confirmacion;
+
+  ConfirmarResetOtpRequest({
+    required this.email,
+    required this.codigo,
+    required this.password_nuevo,
+    required this.password_nuevo_confirmacion,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'email': email,
+        'codigo': codigo,
+        'password_nuevo': password_nuevo,
+        'password_nuevo_confirmacion': password_nuevo_confirmacion,
+      };
+}
+
+class VerificarEmailOtpRequest {
+  final String codigo;
+
+  VerificarEmailOtpRequest({required this.codigo});
+
+  Map<String, dynamic> toJson() => {'codigo': codigo};
+}
+
 
 // ─── Profile & Account Management DTOs ───────────────────────────────────────
 
@@ -723,6 +761,21 @@ class SolicitarCambioEmailRequest {
   Map<String, dynamic> toJson() => {
         'nuevo_email': nuevo_email,
         'password_actual': password_actual,
+      };
+}
+
+class ConfirmarCambioEmailOtpRequest {
+  final String codigo_email_actual;
+  final String codigo_email_nuevo;
+
+  ConfirmarCambioEmailOtpRequest({
+    required this.codigo_email_actual,
+    required this.codigo_email_nuevo,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'codigo_email_actual': codigo_email_actual,
+        'codigo_email_nuevo': codigo_email_nuevo,
       };
 }
 

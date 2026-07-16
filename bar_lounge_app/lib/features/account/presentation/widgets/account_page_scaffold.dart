@@ -9,6 +9,7 @@ class AccountPageScaffold extends StatelessWidget {
   final List<Widget> children;
   final String brandText;
   final EdgeInsetsGeometry padding;
+  final TextAlign titleTextAlign;
 
   const AccountPageScaffold({
     super.key,
@@ -16,6 +17,7 @@ class AccountPageScaffold extends StatelessWidget {
     required this.children,
     this.brandText = 'NOCTURNAL',
     this.padding = const EdgeInsets.fromLTRB(20, 24, 20, 120),
+    this.titleTextAlign = TextAlign.left,
   });
 
   @override
@@ -74,13 +76,17 @@ class AccountPageScaffold extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.epilogue(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.onSurface,
-                        height: 1.1,
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        title,
+                        textAlign: titleTextAlign,
+                        style: GoogleFonts.epilogue(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.onSurface,
+                          height: 1.1,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),

@@ -13,6 +13,7 @@ import '../../features/orders/presentation/bill_summary_screen.dart';
 import '../../features/orders/presentation/order_history_screen.dart';
 import '../../features/orders/presentation/order_receipt_screen.dart';
 import '../../features/account/presentation/account_screen.dart';
+import '../../features/account/presentation/confirm_email_change_code_screen.dart';
 import '../../features/account/presentation/account_profile_screen.dart';
 import '../../features/account/presentation/change_password_screen.dart';
 import '../../features/account/presentation/help_support_screen.dart';
@@ -57,7 +58,15 @@ final GoRouter appRouter = GoRouter(
 
     GoRoute(
       path: '/verify-code',
-      builder: (context, state) => const VerifyCodeScreen(),
+      builder: (context, state) {
+        final args =
+            state.extra as VerifyCodeScreenArgs? ??
+            const VerifyCodeScreenArgs(
+              purpose: VerifyCodePurpose.emailVerification,
+              email: '',
+            );
+        return VerifyCodeScreen(args: args);
+      },
     ),
 
     GoRoute(
@@ -136,6 +145,17 @@ final GoRouter appRouter = GoRouter(
           path: '/account/profile',
           pageBuilder: (context, state) =>
               const NoTransitionPage(child: AccountProfileScreen()),
+        ),
+        GoRoute(
+          path: '/account/confirm-email-change',
+          pageBuilder: (context, state) {
+            final args =
+                state.extra as ConfirmEmailChangeCodeArgs? ??
+                const ConfirmEmailChangeCodeArgs(nuevoEmail: '');
+            return NoTransitionPage(
+              child: ConfirmEmailChangeCodeScreen(args: args),
+            );
+          },
         ),
         GoRoute(
           path: '/account/notifications',

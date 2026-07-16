@@ -59,7 +59,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .createAuthSession(
             token: response.access_token,
             nombre: response.nombre_completo,
-            email: email,
+            email: response.email,
+            emailVerificado: response.email_verificado,
             clienteId: response.cliente_id,
           );
       if (mounted) context.go('/scanner');
@@ -326,7 +327,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               text:
                                   _loading
                                       ? 'ENTERING LOUNGE...'
-                                      : 'Login to Lounge',
+                                      : 'LOGIN TO LOUNGE',
                               onPressed: _loading ? null : _login,
                             ),
                           ],

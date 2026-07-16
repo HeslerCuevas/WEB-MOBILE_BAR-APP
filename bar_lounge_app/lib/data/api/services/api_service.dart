@@ -200,6 +200,37 @@ class ApiService {
     return ResetResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
+  Future<ResetResponse> confirmarResetOtp({
+    required String email,
+    required String codigo,
+    required String passwordNuevo,
+    required String passwordNuevoConfirmacion,
+  }) async {
+    final response = await _client.dio.post(
+      '/clientes/auth/confirmar-reset-otp',
+      data: ConfirmarResetOtpRequest(
+        email: email,
+        codigo: codigo,
+        password_nuevo: passwordNuevo,
+        password_nuevo_confirmacion: passwordNuevoConfirmacion,
+      ).toJson(),
+    );
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<ResetResponse> solicitarVerificacionEmail() async {
+    final response = await _client.dio.post('/clientes/auth/solicitar-verificacion-email');
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<ResetResponse> verificarEmail(String codigo) async {
+    final response = await _client.dio.post(
+      '/clientes/auth/verificar-email',
+      data: VerificarEmailOtpRequest(codigo: codigo).toJson(),
+    );
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
 
   // ─── Profile & Account Management ─────────────────────────────────────────
 
@@ -219,10 +250,24 @@ class ApiService {
     required String passwordActual,
   }) async {
     final response = await _client.dio.post(
-      '/clientes/auth/solicitar-cambio-email',
+      '/clientes/auth/solicitar-cambio-email-otp',
       data: SolicitarCambioEmailRequest(
         nuevo_email: nuevoEmail,
         password_actual: passwordActual,
+      ).toJson(),
+    );
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<ResetResponse> confirmarCambioEmailOtp({
+    required String codigoActual,
+    required String codigoNuevo,
+  }) async {
+    final response = await _client.dio.post(
+      '/clientes/auth/confirmar-cambio-email-otp',
+      data: ConfirmarCambioEmailOtpRequest(
+        codigo_email_actual: codigoActual,
+        codigo_email_nuevo: codigoNuevo,
       ).toJson(),
     );
     return ResetResponse.fromJson(response.data as Map<String, dynamic>);

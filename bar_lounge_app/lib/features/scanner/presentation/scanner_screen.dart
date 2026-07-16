@@ -293,6 +293,14 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
 
   @override
   Widget build(BuildContext context) {
+    final cartCount = ref.watch(cartItemCountProvider);
+    final mesa = ref.watch(activeMesaProvider);
+    final tableNum = mesa.when(
+      data: (m) => m?.numeroMesa,
+      loading: () => null,
+      error: (_, __) => null,
+    );
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -300,18 +308,41 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
           children: [
             // ── Header ───────────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: Center(
-                child: Text(
-                  'NOCTURNAL',
-                  style: GoogleFonts.epilogue(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                    letterSpacing: 2,
-                  ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Row(children: [
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    if (tableNum != null)
+                      Text.rich(TextSpan(
+                        text: 'Table ',
+                        style: GoogleFonts.manrope(fontSize: 12, color: AppColors.onSurfaceVariant),
+                        children: [TextSpan(text: '$tableNum', style: const TextStyle(color: AppColors.secondary, fontWeight: FontWeight.w700))],
+                      ))
+                    else
+                      Text('No Table Assigned', style: GoogleFonts.manrope(fontSize: 12, color: AppColors.error, fontWeight: FontWeight.w700)),
+                    Text('NOCTURNAL', style: GoogleFonts.epilogue(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1)),
+                  ]),
                 ),
-              ),
+                GestureDetector(
+                  onTap: () => context.go('/orders'),
+                  child: Stack(children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: AppColors.surfaceContainerHigh, borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.shopping_bag_outlined, color: AppColors.onSurface, size: 22),
+                    ),
+                    cartCount.when(
+                      data: (c) => c > 0 ? Positioned(right: 0, top: 0, child: Container(
+                        width: 18, height: 18,
+                        decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.primaryContainer),
+                        child: Center(child: Text('$c', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.onPrimaryContainer))),
+                      )) : const SizedBox.shrink(),
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
+                    ),
+                  ]),
+                ),
+              ]),
             ),
 
             // ── Body ─────────────────────────────────────────────────────────

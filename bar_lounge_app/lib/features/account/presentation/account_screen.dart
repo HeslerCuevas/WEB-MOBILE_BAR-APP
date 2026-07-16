@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -9,9 +10,33 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/providers/providers.dart';
+import '../../auth/presentation/verify_code_screen.dart';
 
 class AccountScreen extends ConsumerWidget {
   const AccountScreen({super.key});
+
+  String _displayName({required String storedName, required String email}) {
+    final name = storedName.trim();
+    final normalizedEmail = email.trim().toLowerCase();
+    if (name.isNotEmpty &&
+        !name.contains('@') &&
+        name.toLowerCase() != normalizedEmail) {
+      return name;
+    }
+
+    // Older sessions could have persisted the email as the display name.
+    // Recover a readable account name without changing the stored email.
+    final localPart = normalizedEmail.split('@').first;
+    if (localPart.isEmpty) return 'Guest';
+    return localPart
+        .replaceAll(RegExp(r'[._-]+'), ' ')
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .map(
+          (part) => '${part.substring(0, 1).toUpperCase()}${part.substring(1)}',
+        )
+        .join(' ');
+  }
 
   String _avatarStorageKey({required int? clienteId, required String email}) {
     if (clienteId != null) return 'account_avatar_path_$clienteId';
@@ -23,7 +48,7 @@ class AccountScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(activeSessionProvider);
     final sessionData = session.maybeWhen(data: (s) => s, orElse: () => null);
-    final displayName = session.when(
+    final storedDisplayName = session.when(
       data: (s) => s?.nombreDisplay ?? 'Guest',
       loading: () => 'Loading...',
       error: (_, __) => 'Guest',
@@ -33,10 +58,19 @@ class AccountScreen extends ConsumerWidget {
       loading: () => '',
       error: (_, __) => '',
     );
+    final displayName = _displayName(
+      storedName: storedDisplayName,
+      email: email,
+    );
     final isGuest = session.when(
       data: (s) => s?.esInvitado ?? true,
       loading: () => true,
       error: (_, __) => true,
+    );
+    final emailVerificado = session.when(
+      data: (s) => s?.emailVerificado ?? false,
+      loading: () => false,
+      error: (_, __) => false,
     );
     final avatarStorage = const FlutterSecureStorage();
     return Scaffold(
@@ -63,7 +97,9 @@ class AccountScreen extends ConsumerWidget {
                     radius: 52,
                     backgroundColor: AppColors.background,
                     child: FutureBuilder<String?>(
-                      key: ValueKey('${sessionData?.clienteId ?? email}_avatar'),
+                      key: ValueKey(
+                        '${sessionData?.clienteId ?? email}_avatar',
+                      ),
                       future: avatarStorage.read(
                         key: _avatarStorageKey(
                           clienteId: sessionData?.clienteId,
@@ -197,6 +233,114 @@ class AccountScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+              ],
+              if (!isGuest && !emailVerificado) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 11),
+                  decoration: BoxDecoration(
+                    color: const Color(0x33FF8A3D),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.28),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.14),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.priority_high_rounded,
+                              color: AppColors.primary,
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Pending verification',
+                              style: GoogleFonts.epilogue(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Verify your email to fully secure your account and avoid interruptions later.',
+                        style: GoogleFonts.manrope(
+                          fontSize: 12,
+                          height: 1.35,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 36,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            try {
+                              await ref
+                                  .read(apiServiceProvider)
+                                  .solicitarVerificacionEmail();
+                              if (context.mounted) {
+                                context.push(
+                                  '/verify-code',
+                                  extra: VerifyCodeScreenArgs(
+                                    purpose:
+                                        VerifyCodePurpose.emailVerification,
+                                    email: email,
+                                  ),
+                                );
+                              }
+                            } on DioException catch (_) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Could not send the verification code right now.',
+                                      style: GoogleFonts.manrope(),
+                                    ),
+                                    backgroundColor:
+                                        AppColors.surfaceContainerHigh,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryContainer,
+                            foregroundColor: AppColors.onPrimaryContainer,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                          ),
+                          child: Text(
+                            'Verify Now',
+                            style: GoogleFonts.manrope(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
               ],
               const SizedBox(height: 16),
               Text(
