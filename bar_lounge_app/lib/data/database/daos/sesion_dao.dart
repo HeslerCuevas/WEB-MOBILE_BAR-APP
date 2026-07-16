@@ -46,5 +46,14 @@ class SesionDao extends DatabaseAccessor<AppDatabase> with _$SesionDaoMixin {
         .watchSingleOrNull();
   }
 
+  Future<void> updateNombre(String nombre) async {
+    final session = await getActiveSession();
+    if (session != null) {
+      await update(sesionCliente).replace(
+        session.copyWith(nombreDisplay: nombre),
+      );
+    }
+  }
+
   Future<int> clearSessions() => delete(sesionCliente).go();
 }

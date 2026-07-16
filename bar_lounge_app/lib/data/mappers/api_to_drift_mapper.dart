@@ -34,6 +34,7 @@ class ApiToDriftMapper {
       imagenUrl: Value(dto.imagen_url),
       categoriaId: categoriaId,
       sku: Value(dto.sku),
+      cantidadDisponible: Value(dto.cantidad_disponible),
     );
   }
 

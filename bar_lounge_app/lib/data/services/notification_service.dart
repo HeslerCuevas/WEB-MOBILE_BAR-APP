@@ -6,6 +6,7 @@ class NotificationService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
   static const String _orderUpdatesKey = 'notification_order_updates';
   static const String _specialEventsKey = 'notification_special_events';
+  static const String _accountSecurityKey = 'notification_account_security';
 
   static final FlutterLocalNotificationsPlugin
   _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -66,6 +67,14 @@ class NotificationService {
 
   static Future<void> setSpecialEventsEnabled(bool enabled) {
     return _storage.write(key: _specialEventsKey, value: enabled.toString());
+  }
+
+  static Future<bool> isAccountSecurityEnabled() async {
+    return (await _storage.read(key: _accountSecurityKey)) != 'false';
+  }
+
+  static Future<void> setAccountSecurityEnabled(bool enabled) {
+    return _storage.write(key: _accountSecurityKey, value: enabled.toString());
   }
 
   static Future<void> showNotification({

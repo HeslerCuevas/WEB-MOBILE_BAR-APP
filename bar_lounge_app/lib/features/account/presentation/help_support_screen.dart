@@ -49,7 +49,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   Widget build(BuildContext context) {
     return AccountPageScaffold(
       title: 'Help & Support',
-      brandText: 'Nocturnal',
+      brandText: normalizeBrandText(),
       children: [
         Text(
           'How can our digital sommelier assist you tonight?',

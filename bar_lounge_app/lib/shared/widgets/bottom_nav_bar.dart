@@ -21,7 +21,11 @@ class ScaffoldWithNavBar extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          const CancellationBanner(),
+          if (location.startsWith('/orders'))
+            const SafeArea(
+              bottom: false,
+              child: CancellationBanner(),
+            ),
           Expanded(child: child),
         ],
       ),

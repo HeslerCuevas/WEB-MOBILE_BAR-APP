@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../core/utils/error_handler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -88,7 +89,7 @@ class _CancellationBannerState extends ConsumerState<CancellationBanner>
       if (mounted) {
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Could not cancel order: $e'),
+            content: Text(ErrorHandler.getMessage(e, fallback: 'Could not cancel order.')),
             backgroundColor: AppColors.errorContainer,
           ),
         );

@@ -7,6 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/money.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../data/providers/providers.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/api/dto/api_models.dart';
@@ -18,8 +20,8 @@ class BillSummaryScreen extends ConsumerStatefulWidget {
 }
 class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
   final _uuid = const Uuid();
-  int _tipIndex = 1; 
-  final _tipPcts = [5, 10, 15, -1];
+  int _tipIndex = 0;
+  final _tipPcts = [0, 5, 10, 15, -1];
   final _customTipController = TextEditingController();
   double _customTipAmount = 0.0;
   bool _requestingWaiter = false;
@@ -113,6 +115,41 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
           ),
     );
   }
+
+  void _showBottomNotice(String message, {bool isError = true}) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.info_outline : Icons.check_circle_outline,
+              color: Colors.white,
+              size: 18,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: GoogleFonts.manrope(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor:
+            isError ? AppColors.surfaceContainerHigh : AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final cartItems = ref.watch(cartItemsProvider);
@@ -130,9 +167,9 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
             : const AsyncValue.data([]);
     final mesa = ref.watch(activeMesaProvider);
     final tableNum = mesa.when(
-      data: (m) => m?.numeroMesa ?? 5,
-      loading: () => 5,
-      error: (_, __) => 5,
+      data: (m) => m?.numeroMesa,
+      loading: () => null,
+      error: (_, __) => null,
     );
     final isOrderLocked =
         activeOrder?.estadoCuenta == 'POR_FACTURAR' ||
@@ -142,6 +179,37 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
         if (mounted) setState(() => _paymentPending = false);
       });
     }
+
+    if (tableNum == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.qr_code_scanner, size: 64, color: AppColors.primary),
+              const SizedBox(height: 16),
+              Text(
+                'No Table Assigned',
+                style: GoogleFonts.epilogue(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Please scan a table QR code to start ordering.',
+                style: GoogleFonts.manrope(
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -149,35 +217,19 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'NOCTURNAL',
-                        style: GoogleFonts.epilogue(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.primary,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      Text(
-                        'TABLE $tableNum  •  LIVE BILL',
-                        style: GoogleFonts.manrope(
-                          fontSize: 10,
-                          letterSpacing: 2,
-                          color: AppColors.onSurfaceVariant.withValues(
-                            alpha: 0.6,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Row(children: [
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text.rich(TextSpan(
+                      text: 'Table ',
+                      style: GoogleFonts.manrope(fontSize: 12, color: AppColors.onSurfaceVariant),
+                      children: [TextSpan(text: '$tableNum', style: const TextStyle(color: AppColors.secondary, fontWeight: FontWeight.w700))],
+                    )),
+                    Text('NOCTURNAL', style: GoogleFonts.epilogue(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1)),
+                  ]),
+                ),
+              ]),
             ),
             Expanded(
               child: cartItems.when(
@@ -241,7 +293,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                                 ],
                               ),
                               Text(
-                                '\$${total.toStringAsFixed(2)}',
+                                fmtMoney(total, decimals: 2),
                                 style: GoogleFonts.epilogue(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w900,
@@ -327,7 +379,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                                         if (mounted)
                                           _showDialog(
                                             'Failed',
-                                            'Could not reach the waiter: $e',
+                                            'Could not reach the waiter: ${ErrorHandler.getMessage(e)}',
                                           );
                                       } finally {
                                         if (mounted)
@@ -409,7 +461,10 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                                         onTap: () => setState(() => _tipIndex = i),
                                         child: AnimatedContainer(
                                           duration: const Duration(milliseconds: 150),
-                                          margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
+                                          margin: EdgeInsets.only(
+                                            right:
+                                                i < _tipPcts.length - 1 ? 8 : 0,
+                                          ),
                                           padding: const EdgeInsets.symmetric(
                                             vertical: 10,
                                           ),
@@ -430,7 +485,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                                           child: Center(
                                             child: Text(
                                               _tipPcts[i] == -1
-                                                  ? 'Custom'
+                                                  ? 'CUSTOM'
                                                   : '${_tipPcts[i]}%',
                                               style: GoogleFonts.manrope(
                                                 fontSize: 12,
@@ -449,41 +504,53 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                                 ),
                                 if (_tipPcts[_tipIndex] == -1) ...[
                                   const SizedBox(height: 12),
-                                  TextField(
-                                    controller: _customTipController,
-                                    keyboardType: const TextInputType.numberWithOptions(
-                                      decimal: true,
+                                  SizedBox(
+                                    height: 48,
+                                    child: TextField(
+                                      controller: _customTipController,
+                                      keyboardType: const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(
+                                          RegExp(r'^\d*\.?\d*'),
+                                        ),
+                                      ],
+                                      style: GoogleFonts.manrope(
+                                        color: AppColors.onSurface,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: 'Enter tip amount',
+                                        hintStyle: GoogleFonts.manrope(
+                                          color: AppColors.onSurfaceVariant,
+                                        ),
+                                        prefixIcon: const Icon(
+                                          Icons.attach_money,
+                                          size: 16,
+                                          color: AppColors.onSurfaceVariant,
+                                        ),
+                                        filled: true,
+                                        fillColor: AppColors.surfaceContainerHigh,
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                                      ),
+                                      onChanged: (val) {
+                                        double parsed = double.tryParse(val) ?? 0.0;
+                                        // Validation: max 100% of subtotal or a hard limit of 5000.
+                                        double maxTip = totalSubtotal > 5000 ? totalSubtotal : 5000.0;
+                                        if (parsed > maxTip) {
+                                          parsed = maxTip;
+                                          _customTipController.text = maxTip.toStringAsFixed(0);
+                                          _customTipController.selection = TextSelection.fromPosition(TextPosition(offset: _customTipController.text.length));
+                                        }
+                                        setState(() {
+                                          _customTipAmount = parsed;
+                                        });
+                                      },
                                     ),
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.allow(
-                                        RegExp(r'^\d*\.?\d*'),
-                                      ),
-                                    ],
-                                    style: GoogleFonts.manrope(
-                                      color: AppColors.onSurface,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: 'Enter tip amount',
-                                      hintStyle: GoogleFonts.manrope(
-                                        color: AppColors.onSurfaceVariant,
-                                      ),
-                                      prefixIcon: const Icon(
-                                        Icons.attach_money,
-                                        size: 16,
-                                        color: AppColors.onSurfaceVariant,
-                                      ),
-                                      filled: true,
-                                      fillColor: AppColors.surfaceContainerHigh,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                    ),
-                                    onChanged: (val) {
-                                      setState(() {
-                                        _customTipAmount = double.tryParse(val) ?? 0.0;
-                                      });
-                                    },
                                   ),
                                 ],
                                 const SizedBox(height: 8),
@@ -502,7 +569,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        'Extra tip: \$${extraTip.toStringAsFixed(2)}',
+                                        'Extra tip: ${fmtMoney(extraTip, decimals: 2)}',
                                         style: GoogleFonts.manrope(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
@@ -532,22 +599,22 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                             children: [
                               _billRow(
                                 'Subtotal',
-                                '\$${totalSubtotal.toStringAsFixed(2)}',
+                                fmtMoney(totalSubtotal, decimals: 2),
                               ),
                               const SizedBox(height: 8),
                               _billRow(
                                 'ITBIS (18%)',
-                                '\$${totalTaxes.toStringAsFixed(2)}',
+                                fmtMoney(totalTaxes, decimals: 2),
                               ),
                               const SizedBox(height: 8),
                               _billRow(
                                 'Legal Tip (10%)',
-                                '\$${legalTip.toStringAsFixed(2)}',
+                                fmtMoney(legalTip, decimals: 2),
                               ),
                               const SizedBox(height: 8),
                               _billRow(
                                 'Extra Tip (${_tipPcts[_tipIndex] == -1 ? 'Custom' : '${_tipPcts[_tipIndex]}%'})',
-                                '\$${extraTip.toStringAsFixed(2)}',
+                                fmtMoney(extraTip, decimals: 2),
                               ),
                               Divider(
                                 color: AppColors.outlineVariant.withValues(
@@ -557,7 +624,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                               ),
                               _billRow(
                                 'TOTAL',
-                                '\$${total.toStringAsFixed(2)}',
+                                fmtMoney(total, decimals: 2),
                                 bold: true,
                               ),
                             ],
@@ -848,7 +915,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Qty: ${item.cantidad}  •  \$${item.precioUnitario.toStringAsFixed(2)}',
+                  'Qty: ${item.cantidad}  •  ${fmtMoney(item.precioUnitario, decimals: 2)}',
                   style: GoogleFonts.manrope(
                     fontSize: 11,
                     color: AppColors.onSurfaceVariant,
@@ -861,7 +928,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '\$${item.subtotalLinea.toStringAsFixed(2)}',
+                fmtMoney(item.subtotalLinea, decimals: 2),
                 style: GoogleFonts.manrope(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -882,33 +949,44 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                         }
                       },
                       child: Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: AppColors.error.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
                           Icons.remove,
                           color: AppColors.error,
-                          size: 16,
+                          size: 18,
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
+                    Text('${item.cantidad}', style: GoogleFonts.manrope(fontWeight: FontWeight.w700, color: AppColors.onSurface)),
+                    const SizedBox(width: 8),
                     GestureDetector(
                       onTap: () async {
-                        await ref.read(carritoDaoProvider).removeItem(item.id);
+                        try {
+                          await ref.read(carritoDaoProvider).updateQuantity(item.id, item.cantidad + 1);
+                        } catch (e) {
+                          if (mounted) {
+                            _showBottomNotice(ErrorHandler.getMessage(e));
+                          }
+                        }
                       },
                       child: Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
+                          color: AppColors.secondary,
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
-                          Icons.delete_outline,
-                          color: AppColors.error,
-                          size: 16,
+                          Icons.add,
+                          color: AppColors.onSecondary,
+                          size: 18,
                         ),
                       ),
                     ),
@@ -961,7 +1039,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Qty: ${item.cantidad}  •  \$${item.precioUnitario.toStringAsFixed(2)}',
+                  'Qty: ${item.cantidad}  •  ${fmtMoney(item.precioUnitario, decimals: 2)}',
                   style: GoogleFonts.manrope(
                     fontSize: 11,
                     color: AppColors.onSurfaceVariant,
@@ -972,7 +1050,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
           ),
           const SizedBox(width: 12),
           Text(
-            '\$${item.subtotalLinea.toStringAsFixed(2)}',
+            fmtMoney(item.subtotalLinea, decimals: 2),
             style: GoogleFonts.manrope(
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -1176,7 +1254,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       }
     } catch (error) {
       if (mounted) {
-        _showDialog('Confirmation Failed', 'Error: $error');
+        _showBottomNotice(ErrorHandler.getMessage(error));
       }
     } finally {
       if (mounted) setState(() => _confirming = false);
@@ -1238,7 +1316,7 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
       if (mounted) {
         _showDialog(
           'Payment Failed',
-          'Error: $error',
+          ErrorHandler.getMessage(error),
         );
         setState(() => _paymentPending = false);
       }

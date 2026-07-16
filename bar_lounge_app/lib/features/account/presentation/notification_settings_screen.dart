@@ -17,7 +17,7 @@ class _NotificationSettingsScreenState
     extends State<NotificationSettingsScreen> {
   bool _orderUpdates = true;
   bool _specialEvents = true;
-  final bool _accountSecurity = true;
+  bool _accountSecurity = true;
   bool _loading = true;
 
   @override
@@ -29,10 +29,12 @@ class _NotificationSettingsScreenState
   Future<void> _loadPreferences() async {
     final orderUpdates = await NotificationService.areOrderUpdatesEnabled();
     final specialEvents = await NotificationService.areSpecialEventsEnabled();
+    final accountSecurity = await NotificationService.isAccountSecurityEnabled();
     if (!mounted) return;
     setState(() {
       _orderUpdates = orderUpdates;
       _specialEvents = specialEvents;
+      _accountSecurity = accountSecurity;
       _loading = false;
     });
   }
@@ -53,11 +55,19 @@ class _NotificationSettingsScreenState
     }
   }
 
+  Future<void> _setAccountSecurity(bool value) async {
+    setState(() => _accountSecurity = value);
+    await NotificationService.setAccountSecurityEnabled(value);
+    if (value) {
+      await NotificationService.initialize();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AccountPageScaffold(
       title: 'Notifications',
-      brandText: 'Nocturnal',
+      brandText: normalizeBrandText(),
       children: [
         Text(
           'Manage how Nocturnal communicates with you.',
@@ -94,7 +104,7 @@ class _NotificationSettingsScreenState
             title: 'Account Security',
             description: 'Important alerts regarding login activity.',
             value: _accountSecurity,
-            onChanged: null,
+            onChanged: _setAccountSecurity,
           ),
         ],
       ],

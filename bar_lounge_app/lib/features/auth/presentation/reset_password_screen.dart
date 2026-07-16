@@ -90,16 +90,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         ),
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0, -1.1),
-            radius: 1.05,
-            colors: [
-              AppColors.primaryContainer.withValues(alpha: 0.035),
-              AppColors.background,
-            ],
-          ),
-        ),
+        color: AppColors.background,
         child: SafeArea(
           top: false,
           child: SingleChildScrollView(

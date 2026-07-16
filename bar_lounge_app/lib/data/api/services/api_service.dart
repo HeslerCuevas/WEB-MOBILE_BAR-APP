@@ -199,4 +199,103 @@ class ApiService {
     );
     return ResetResponse.fromJson(response.data as Map<String, dynamic>);
   }
+
+
+  // ─── Profile & Account Management ─────────────────────────────────────────
+
+  /// Updates the authenticated client's display name.
+  Future<ActualizarPerfilResponse> actualizarPerfil(String nombreCompleto) async {
+    final response = await _client.dio.put(
+      '/clientes/auth/perfil',
+      data: ActualizarPerfilRequest(nombre_completo: nombreCompleto).toJson(),
+    );
+    return ActualizarPerfilResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Initiates the dual-confirmation email change flow.
+  /// Sends confirmation to [emailActual] and verification to [nuevoEmail].
+  Future<ResetResponse> solicitarCambioEmail({
+    required String nuevoEmail,
+    required String passwordActual,
+  }) async {
+    final response = await _client.dio.post(
+      '/clientes/auth/solicitar-cambio-email',
+      data: SolicitarCambioEmailRequest(
+        nuevo_email: nuevoEmail,
+        password_actual: passwordActual,
+      ).toJson(),
+    );
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Authenticated password change. Sends a notification email with a
+  /// 'wasn't me' recovery link after success.
+  Future<ResetResponse> cambiarPassword({
+    required String passwordActual,
+    required String passwordNuevo,
+    required String passwordNuevoConfirmacion,
+  }) async {
+    final response = await _client.dio.post(
+      '/clientes/auth/cambiar-password',
+      data: CambiarPasswordRequest(
+        password_actual: passwordActual,
+        password_nuevo: passwordNuevo,
+        password_nuevo_confirmacion: passwordNuevoConfirmacion,
+      ).toJson(),
+    );
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Sends an account-deletion confirmation email. The account is only
+  /// soft-deleted after the user clicks the link.
+  Future<ResetResponse> solicitarEliminacion({required String passwordActual}) async {
+    final response = await _client.dio.post(
+      '/clientes/auth/solicitar-eliminacion',
+      data: SolicitarEliminacionRequest(password_actual: passwordActual).toJson(),
+    );
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Sends a reactivation email to [email] if an inactive account exists.
+  Future<ResetResponse> solicitarReactivacion(String email) async {
+    final response = await _client.dio.post(
+      '/clientes/auth/reactivar',
+      data: SolicitarReactivacionRequest(email: email).toJson(),
+    );
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  // ─── Token Confirmations ───────────────────────────────────────────────────
+
+  /// Confirms email change (either old or new email).
+  Future<ResetResponse> confirmarCambioEmail({
+    required String token,
+    required String tipo,
+  }) async {
+    final response = await _client.dio.post(
+      '/clientes/auth/confirmar-cambio-email',
+      data: ConfirmarCambioEmailRequest(token: token, tipo: tipo).toJson(),
+    );
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Confirms account deletion using token.
+  Future<ResetResponse> confirmarEliminacion(String token) async {
+    final response = await _client.dio.post(
+      '/clientes/auth/confirmar-eliminacion',
+      data: ConfirmarTokenRequest(token: token).toJson(),
+    );
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Confirms account reactivation using token.
+  Future<ResetResponse> confirmarReactivacion(String token) async {
+    final response = await _client.dio.post(
+      '/clientes/auth/confirmar-reactivacion',
+      data: ConfirmarTokenRequest(token: token).toJson(),
+    );
+    return ResetResponse.fromJson(response.data as Map<String, dynamic>);
+  }
 }
+
+

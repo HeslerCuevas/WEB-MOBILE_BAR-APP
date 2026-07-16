@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/error_handler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/money.dart';
 import '../../../data/providers/providers.dart';
 import '../../../data/database/app_database.dart';
 import '../../../shared/widgets/price_tag.dart';
@@ -17,11 +19,19 @@ class MenuScreen extends ConsumerStatefulWidget {
 class _MenuScreenState extends ConsumerState<MenuScreen> {
   int _selectedCat = -1;
   String _snack = '';
+  bool _snackIsError = false;
+  int _snackToken = 0;
 
-  void _showSnack(String msg) {
-    setState(() => _snack = msg);
+  void _showSnack(String msg, {bool isError = false}) {
+    final token = ++_snackToken;
+    setState(() {
+      _snack = msg;
+      _snackIsError = isError;
+    });
     Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _snack = '');
+      if (mounted && token == _snackToken) {
+        setState(() => _snack = '');
+      }
     });
   }
 
@@ -46,9 +56,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
         activeOrder?.estadoCuenta == 'POR_FACTURAR' ||
         activeOrder?.estadoCuenta == 'PENDING_PAYMENT';
     final tableNum = mesa.when(
-      data: (m) => m?.numeroMesa ?? 5,
-      loading: () => 5,
-      error: (_, __) => 5,
+      data: (m) => m?.numeroMesa,
+      loading: () => null,
+      error: (_, __) => null,
     );
 
     return Scaffold(
@@ -63,11 +73,14 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 child: Row(children: [
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text.rich(TextSpan(
-                        text: 'Table ',
-                        style: GoogleFonts.manrope(fontSize: 12, color: AppColors.onSurfaceVariant),
-                        children: [TextSpan(text: '$tableNum', style: const TextStyle(color: AppColors.secondary, fontWeight: FontWeight.w700))],
-                      )),
+                      if (tableNum != null)
+                        Text.rich(TextSpan(
+                          text: 'Table ',
+                          style: GoogleFonts.manrope(fontSize: 12, color: AppColors.onSurfaceVariant),
+                          children: [TextSpan(text: '$tableNum', style: const TextStyle(color: AppColors.secondary, fontWeight: FontWeight.w700))],
+                        ))
+                      else
+                        Text('No Table Assigned', style: GoogleFonts.manrope(fontSize: 12, color: AppColors.error, fontWeight: FontWeight.w700)),
                       Text('NOCTURNAL', style: GoogleFonts.epilogue(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1)),
                     ]),
                   ),
@@ -133,7 +146,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
                       itemCount: items.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 14),
-                      itemBuilder: (_, i) => _productCard(items[i], isOrderLocked),
+                      itemBuilder: (_, i) => _productCard(items[i], isOrderLocked, tableNum == null),
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
@@ -149,14 +162,33 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryContainer,
+                  color: _snackIsError
+                      ? AppColors.surfaceContainerHigh
+                      : AppColors.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: AppColors.ctaShadow,
                 ),
                 child: Row(children: [
-                  const Icon(Icons.check_circle, color: AppColors.onPrimaryContainer, size: 18),
+                  Icon(
+                    _snackIsError ? Icons.info_outline : Icons.check_circle,
+                    color: _snackIsError
+                        ? AppColors.onSurface
+                        : AppColors.onPrimaryContainer,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
-                  Text(_snack, style: GoogleFonts.manrope(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.onPrimaryContainer)),
+                  Expanded(
+                    child: Text(
+                      _snack,
+                      style: GoogleFonts.manrope(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _snackIsError
+                            ? AppColors.onSurface
+                            : AppColors.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
                 ]),
               ),
             ),
@@ -299,7 +331,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   // Uses productBestPromoProvider (FutureProvider.family) so ALL promotion
   // types are resolved — TODOS, PRODUCTOS, and CATEGORIAS.
 
-  Widget _productCard(ProductosCacheData p, bool isOrderLocked) {
+  Widget _productCard(ProductosCacheData p, bool isOrderLocked, bool isTableMissing) {
     final promoKey = ProductPromoKey(p.id, p.categoriaId);
     final promoAsync = ref.watch(productBestPromoProvider(promoKey));
     final evalService = ref.read(promotionsEvalServiceProvider);
@@ -391,7 +423,6 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                     ),
                   ),
                 ),
-              // Happy Hour label
               if (hasDiscount && syncPromo.aplicaHappyHour)
                 Positioned(
                   bottom: 6, left: 6,
@@ -406,6 +437,24 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       style: GoogleFonts.manrope(fontSize: 7.5, fontWeight: FontWeight.w700, color: AppColors.secondary),
                     ),
                   ),
+                ),
+              // Out of stock or low stock indicator
+              if (p.cantidadDisponible != null)
+                Positioned(
+                  bottom: 6, right: 6,
+                  child: p.cantidadDisponible! <= 0
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(color: AppColors.error, borderRadius: BorderRadius.circular(4)),
+                        child: Text('OUT OF STOCK', style: GoogleFonts.manrope(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white)),
+                      )
+                    : (p.cantidadDisponible! <= 5
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(4)),
+                            child: Text('ONLY ${p.cantidadDisponible} LEFT', style: GoogleFonts.manrope(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white)),
+                          )
+                        : const SizedBox.shrink()),
                 ),
             ],
           ),
@@ -432,7 +481,25 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                     promo: syncPromo,
                   ),
                 _AnimatedAddButton(
-                  onTap: () async {
+                  onTap: p.cantidadDisponible != null && p.cantidadDisponible! <= 0 ? null : () async {
+                    if (isTableMissing) {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          backgroundColor: AppColors.surfaceContainerHigh,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          title: Text('No Table Assigned', style: GoogleFonts.epilogue(fontWeight: FontWeight.w800, color: AppColors.onSurface)),
+                          content: Text('Please scan a table QR code or enter one manually in the Scanner screen to order.', style: GoogleFonts.manrope(color: AppColors.onSurfaceVariant)),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              child: Text('OK', style: GoogleFonts.epilogue(fontWeight: FontWeight.w700, color: AppColors.primary)),
+                            ),
+                          ],
+                        ),
+                      );
+                      return;
+                    }
                     if (isOrderLocked) {
                       showDialog(
                         context: context,
@@ -468,7 +535,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       );
                       _showSnack('${p.nombre} added to cart!');
                     } catch (e) {
-                      _showSnack('Error adding item.');
+                      _showSnack(
+                        ErrorHandler.getMessage(
+                          e,
+                          fallback: 'Could not add this item right now.',
+                        ),
+                        isError: true,
+                      );
                     }
                   },
                 ),
@@ -524,8 +597,8 @@ class _DiscountedPriceBlock extends StatelessWidget {
 // ── Animated add button ─────────────────────────────────────────────────────
 
 class _AnimatedAddButton extends StatefulWidget {
-  final VoidCallback onTap;
-  const _AnimatedAddButton({required this.onTap});
+  final VoidCallback? onTap;
+  const _AnimatedAddButton({this.onTap});
   @override
   State<_AnimatedAddButton> createState() => _AnimatedAddButtonState();
 }
@@ -535,10 +608,10 @@ class _AnimatedAddButtonState extends State<_AnimatedAddButton> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTap: () async {
-        widget.onTap();
+      onTapDown: widget.onTap == null ? null : (_) => setState(() => _isPressed = true),
+      onTapCancel: widget.onTap == null ? null : () => setState(() => _isPressed = false),
+      onTap: widget.onTap == null ? null : () async {
+        widget.onTap!();
         setState(() => _isPressed = true);
         await Future.delayed(const Duration(milliseconds: 150));
         if (mounted) setState(() => _isPressed = false);

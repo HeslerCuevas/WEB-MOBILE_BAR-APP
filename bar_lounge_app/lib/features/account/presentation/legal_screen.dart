@@ -11,7 +11,7 @@ class LegalScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AccountPageScaffold(
       title: 'Privacy & Terms',
-      brandText: 'Nocturnal',
+      brandText: normalizeBrandText(),
       children: [
         Text(
           'Generic privacy policy, terms, and conditions for Nocturnal app users.',

@@ -9,6 +9,7 @@ class ProductosCache extends Table {
   RealColumn get tasaImpuesto => real().withDefault(const Constant(0.18))();
   BoolColumn get estaDisponible => boolean().withDefault(const Constant(true))();
   TextColumn get imagenUrl => text().nullable()();
+  IntColumn get cantidadDisponible => integer().nullable()();
   IntColumn get categoriaId => integer().references(CategoriasCache, #id)();
   DateTimeColumn get sincronizadoEn => dateTime().withDefault(currentDateAndTime)();
   @override

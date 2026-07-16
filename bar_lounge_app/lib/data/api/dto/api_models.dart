@@ -124,6 +124,7 @@ class ProductoDto {
   final double tasa_impuesto;
   final bool esta_disponible;
   final String imagen_url;
+  final int? cantidad_disponible;
 
   ProductoDto({
     required this.id,
@@ -134,6 +135,7 @@ class ProductoDto {
     required this.tasa_impuesto,
     required this.esta_disponible,
     required this.imagen_url,
+    this.cantidad_disponible,
   });
 
 
@@ -146,6 +148,7 @@ class ProductoDto {
         tasa_impuesto: _parseDouble(json['tasa_impuesto'], defaultValue: 0.18),
         esta_disponible: json['esta_disponible'] as bool? ?? true,
         imagen_url: json['imagen_url'] as String? ?? '',
+        cantidad_disponible: json['cantidad_disponible'] as int?,
       );
 }
 
@@ -683,3 +686,94 @@ class ResetResponse {
   factory ResetResponse.fromJson(Map<String, dynamic> json) =>
       ResetResponse(mensaje: json['mensaje'] as String? ?? '');
 }
+
+
+// ─── Profile & Account Management DTOs ───────────────────────────────────────
+
+class ActualizarPerfilRequest {
+  final String nombre_completo;
+
+  ActualizarPerfilRequest({required this.nombre_completo});
+
+  Map<String, dynamic> toJson() => {'nombre_completo': nombre_completo};
+}
+
+class ActualizarPerfilResponse {
+  final String mensaje;
+  final String nombre_completo;
+
+  ActualizarPerfilResponse({required this.mensaje, required this.nombre_completo});
+
+  factory ActualizarPerfilResponse.fromJson(Map<String, dynamic> json) =>
+      ActualizarPerfilResponse(
+        mensaje: json['mensaje'] as String? ?? '',
+        nombre_completo: json['nombre_completo'] as String? ?? '',
+      );
+}
+
+class SolicitarCambioEmailRequest {
+  final String nuevo_email;
+  final String password_actual;
+
+  SolicitarCambioEmailRequest({
+    required this.nuevo_email,
+    required this.password_actual,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'nuevo_email': nuevo_email,
+        'password_actual': password_actual,
+      };
+}
+
+class CambiarPasswordRequest {
+  final String password_actual;
+  final String password_nuevo;
+  final String password_nuevo_confirmacion;
+
+  CambiarPasswordRequest({
+    required this.password_actual,
+    required this.password_nuevo,
+    required this.password_nuevo_confirmacion,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'password_actual': password_actual,
+        'password_nuevo': password_nuevo,
+        'password_nuevo_confirmacion': password_nuevo_confirmacion,
+      };
+}
+
+class SolicitarEliminacionRequest {
+  final String password_actual;
+
+  SolicitarEliminacionRequest({required this.password_actual});
+
+  Map<String, dynamic> toJson() => {'password_actual': password_actual};
+}
+
+class SolicitarReactivacionRequest {
+  final String email;
+
+  SolicitarReactivacionRequest({required this.email});
+
+  Map<String, dynamic> toJson() => {'email': email};
+}
+
+class ConfirmarCambioEmailRequest {
+  final String token;
+  final String tipo;
+
+  ConfirmarCambioEmailRequest({required this.token, required this.tipo});
+
+  Map<String, dynamic> toJson() => {'token': token, 'tipo': tipo};
+}
+
+class ConfirmarTokenRequest {
+  final String token;
+
+  ConfirmarTokenRequest({required this.token});
+
+  Map<String, dynamic> toJson() => {'token': token};
+}
+

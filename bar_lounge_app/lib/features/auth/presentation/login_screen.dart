@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../../core/utils/error_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
@@ -18,9 +19,10 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
-  bool _obscure = true;
-  bool _loading = false;
+  final _passCtrl  = TextEditingController();
+  bool _obscure     = true;
+  bool _loading     = false;
+  bool _isInactive  = false;   // true when the account exists but is deactivated
   String? _error;
   @override
   void initState() {
@@ -37,14 +39,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _login() async {
     final email = _emailCtrl.text.trim();
-    final pass = _passCtrl.text.trim();
+    final pass  = _passCtrl.text.trim();
     if (email.isEmpty || pass.isEmpty) {
       setState(() => _error = 'Please fill in all fields.');
       return;
     }
     setState(() {
-      _loading = true;
-      _error = null;
+      _loading    = true;
+      _error      = null;
+      _isInactive = false;
     });
     try {
       final api = ref.read(apiServiceProvider);
@@ -61,12 +64,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           );
       if (mounted) context.go('/scanner');
     } on DioException catch (error) {
-      if (error.response != null &&
-          (error.response?.statusCode == 400 ||
-              error.response?.statusCode == 401)) {
+      final statusCode = error.response?.statusCode;
+      final detail = (error.response?.data as Map?)?['detail'] as String? ?? '';
+
+      if (statusCode == 403 && detail.contains('CUENTA_INACTIVA')) {
+        // Inactive account — offer reactivation flow
+        setState(() {
+          _isInactive = true;
+          _error = 'Your account is currently inactive.';
+        });
+        return;
+      }
+
+      if (statusCode == 400 || statusCode == 401) {
         setState(() => _error = 'Email or password is incorrect.');
         return;
       }
+
+      // CORE offline — try local session
       try {
         await ref
             .read(sesionDaoProvider)
@@ -87,36 +102,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  /// Sends a reactivation email and shows a confirmation snackbar.
+  Future<void> _sendReactivation() async {
+    final email = _emailCtrl.text.trim();
+    if (email.isEmpty) {
+      setState(() => _error = 'Enter your email address above, then tap Reactivate.');
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await ref.read(apiServiceProvider).solicitarReactivacion(email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Reactivation email sent! Check your inbox and tap the link.',
+              style: GoogleFonts.manrope(fontSize: 13),
+            ),
+            backgroundColor: AppColors.surfaceContainerHigh,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        setState(() {
+          _isInactive = false;
+          _error = null;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _error = 'Could not send reactivation email. Please try again.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          Positioned(
-            top: -80,
-            right: -80,
-            child: Container(
-              width: 280,
-              height: 280,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primary.withValues(alpha: 0.07),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -100,
-            left: -80,
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.tertiary.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -184,23 +208,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   color: AppColors.error.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: Row(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(
-                                      Icons.error_outline,
-                                      color: AppColors.error,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        _error!,
-                                        style: GoogleFonts.manrope(
-                                          fontSize: 12,
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.error_outline,
                                           color: AppColors.error,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            _error!,
+                                            style: GoogleFonts.manrope(
+                                              fontSize: 12,
+                                              color: AppColors.error,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    // Reactivation button shown only when account is inactive
+                                    if (_isInactive) ...[
+                                      const SizedBox(height: 10),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: OutlinedButton.icon(
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: AppColors.primary,
+                                            side: const BorderSide(color: AppColors.primary),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(vertical: 10),
+                                          ),
+                                          icon: const Icon(Icons.restore, size: 16),
+                                          label: Text(
+                                            _loading ? 'Sending...' : 'Reactivate Account',
+                                            style: GoogleFonts.manrope(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          onPressed: _loading ? null : _sendReactivation,
                                         ),
                                       ),
-                                    ),
+                                    ],
                                   ],
                                 ),
                               ),

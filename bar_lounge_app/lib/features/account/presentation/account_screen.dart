@@ -1,7 +1,10 @@
 // ignore_for_file: unused_element
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
@@ -9,19 +12,33 @@ import '../../../data/providers/providers.dart';
 
 class AccountScreen extends ConsumerWidget {
   const AccountScreen({super.key});
+
+  String _avatarStorageKey({required int? clienteId, required String email}) {
+    if (clienteId != null) return 'account_avatar_path_$clienteId';
+    if (email.isNotEmpty) return 'account_avatar_path_${email.toLowerCase()}';
+    return 'account_avatar_path_guest';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(activeSessionProvider);
+    final sessionData = session.maybeWhen(data: (s) => s, orElse: () => null);
     final displayName = session.when(
       data: (s) => s?.nombreDisplay ?? 'Guest',
       loading: () => 'Loading...',
       error: (_, __) => 'Guest',
+    );
+    final email = session.when(
+      data: (s) => s?.email ?? '',
+      loading: () => '',
+      error: (_, __) => '',
     );
     final isGuest = session.when(
       data: (s) => s?.esInvitado ?? true,
       loading: () => true,
       error: (_, __) => true,
     );
+    final avatarStorage = const FlutterSecureStorage();
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -45,15 +62,38 @@ class AccountScreen extends ConsumerWidget {
                   CircleAvatar(
                     radius: 52,
                     backgroundColor: AppColors.background,
-                    child: Text(
-                      displayName.isNotEmpty
-                          ? displayName[0].toUpperCase()
-                          : 'G',
-                      style: GoogleFonts.epilogue(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primary,
+                    child: FutureBuilder<String?>(
+                      key: ValueKey('${sessionData?.clienteId ?? email}_avatar'),
+                      future: avatarStorage.read(
+                        key: _avatarStorageKey(
+                          clienteId: sessionData?.clienteId,
+                          email: email,
+                        ),
                       ),
+                      builder: (context, snapshot) {
+                        final path = snapshot.data;
+                        if (path != null && File(path).existsSync()) {
+                          return ClipOval(
+                            child: Image.file(
+                              File(path),
+                              width: 104,
+                              height: 104,
+                              fit: BoxFit.cover,
+                            ),
+                          );
+                        }
+
+                        return Text(
+                          displayName.isNotEmpty
+                              ? displayName[0].toUpperCase()
+                              : 'G',
+                          style: GoogleFonts.epilogue(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.primary,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -323,6 +363,7 @@ class AccountScreen extends ConsumerWidget {
                     await ref.read(mesaDaoProvider).clearAllActiveMesas();
                     await ref.read(sesionDaoProvider).clearSessions();
                     await ref.read(apiClientProvider).clearToken();
+                    ref.invalidate(activeSessionProvider);
                     if (context.mounted) context.go('/');
                   }
                 },

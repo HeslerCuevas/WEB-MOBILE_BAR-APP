@@ -27,10 +27,10 @@ class AccountPageScaffold extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              height: 64,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              height: 68,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.background.withValues(alpha: 0.88),
+                color: AppColors.background,
                 border: Border(
                   bottom: BorderSide(
                     color: Colors.white.withValues(alpha: 0.06),
@@ -57,10 +57,10 @@ class AccountPageScaffold extends StatelessWidget {
                       brandText,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.epilogue(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.w900,
                         color: AppColors.primary,
-                        letterSpacing: brandText == 'NOCTURNAL' ? 3 : 0,
+                        letterSpacing: 1,
                       ),
                     ),
                   ),
@@ -155,3 +155,5 @@ Widget accountSectionLabel(String text) {
     ),
   );
 }
+
+String normalizeBrandText([String text = 'NOCTURNAL']) => text.toUpperCase();

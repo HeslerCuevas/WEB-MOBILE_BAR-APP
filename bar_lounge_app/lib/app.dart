@@ -66,12 +66,22 @@ class _NocturnalAppState extends ConsumerState<NocturnalApp> {
   /// the GoRouter path  /confirm-reset?token=...
   void _handleDeepLink(Uri uri) {
     debugPrint('[DeepLink] Received: $uri');
-    if (uri.scheme == 'nocturnalbar' && uri.host == 'reset-password') {
+    final bool isCustomReset =
+        uri.scheme == 'nocturnalbar' && uri.host == 'reset-password';
+    final bool isHttpsReset =
+        (uri.scheme == 'https' || uri.scheme == 'http') &&
+        uri.host == 'nocturnal-bar.app' &&
+        (uri.path == '/reset-password' || uri.path == '/confirm-reset');
+
+    if (isCustomReset || isHttpsReset) {
       final token = uri.queryParameters['token'] ?? '';
-      debugPrint('[DeepLink] Password reset token: ${token.substring(0, token.length.clamp(0, 8))}...');
+      final encodedToken = Uri.encodeQueryComponent(token);
+      debugPrint(
+        '[DeepLink] Password reset token: ${token.substring(0, token.length.clamp(0, 8))}...',
+      );
       // Small delay so the router is ready if the app is cold-starting
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        appRouter.go('/confirm-reset?token=$token');
+        appRouter.go('/confirm-reset?token=$encodedToken');
       });
     }
   }

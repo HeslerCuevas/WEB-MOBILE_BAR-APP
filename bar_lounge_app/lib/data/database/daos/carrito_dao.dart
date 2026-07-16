@@ -2,9 +2,10 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../app_database.dart';
 import '../tables/carrito_local.dart';
+import '../tables/productos_cache.dart';
 part 'carrito_dao.g.dart';
 const _uuid = Uuid();
-@DriftAccessor(tables: [CarritoLocal])
+@DriftAccessor(tables: [CarritoLocal, ProductosCache])
 class CarritoDao extends DatabaseAccessor<AppDatabase> with _$CarritoDaoMixin {
   CarritoDao(super.db);
   Future<void> addItem({
@@ -19,6 +20,22 @@ class CarritoDao extends DatabaseAccessor<AppDatabase> with _$CarritoDaoMixin {
         .getSingleOrNull();
     if (existing != null) {
       final newQty = existing.cantidad + 1;
+
+      final prod = await (select(productosCache)..where((p) => p.id.equals(productoId))).getSingleOrNull();
+      if (prod?.cantidadDisponible != null && newQty > prod!.cantidadDisponible!) {
+        throw Exception(
+          'Only ${prod.cantidadDisponible} of this item are currently available.',
+        );
+      }
+
+      if (newQty > 25) {
+        throw Exception('You can add up to 25 of the same item.');
+      }
+      final currentTotal = await _getTotalQuantity();
+      if (currentTotal + 1 > 50) {
+        throw Exception('Maximum combined quantity per order is 50.');
+      }
+
       final subtotal = _roundTo2(precioUnitario * newQty);
       final impuesto = _roundTo2(subtotal * tasaImpuesto);
       await (update(carritoLocal)..where((c) => c.id.equals(existing.id)))
@@ -28,6 +45,15 @@ class CarritoDao extends DatabaseAccessor<AppDatabase> with _$CarritoDaoMixin {
         montoImpuesto: Value(impuesto),
       ));
     } else {
+      final prod = await (select(productosCache)..where((p) => p.id.equals(productoId))).getSingleOrNull();
+      if (prod?.cantidadDisponible != null && 1 > prod!.cantidadDisponible!) {
+        throw Exception('This item is out of stock right now.');
+      }
+      final currentTotal = await _getTotalQuantity();
+      if (currentTotal + 1 > 50) {
+        throw Exception('Maximum combined quantity per order is 50.');
+      }
+
       final subtotal = _roundTo2(precioUnitario * 1);
       final impuesto = _roundTo2(subtotal * tasaImpuesto);
       await into(carritoLocal).insert(CarritoLocalCompanion.insert(
@@ -47,8 +73,26 @@ class CarritoDao extends DatabaseAccessor<AppDatabase> with _$CarritoDaoMixin {
       await (delete(carritoLocal)..where((c) => c.id.equals(id))).go();
       return;
     }
-    final item = await (select(carritoLocal)..where((c) => c.id.equals(id)))
-        .getSingle();
+    if (newQty > 25) {
+      throw Exception('You can add up to 25 of the same item.');
+    }
+
+    final item = await (select(carritoLocal)..where((c) => c.id.equals(id))).getSingle();
+
+    final prod = await (select(productosCache)..where((p) => p.id.equals(item.productoId))).getSingleOrNull();
+    if (prod?.cantidadDisponible != null && newQty > prod!.cantidadDisponible!) {
+      throw Exception(
+        'Only ${prod.cantidadDisponible} of this item are currently available.',
+      );
+    }
+
+    final diff = newQty - item.cantidad;
+    if (diff > 0) {
+      final currentTotal = await _getTotalQuantity();
+      if (currentTotal + diff > 50) {
+        throw Exception('Maximum combined quantity per order is 50.');
+      }
+    }
     final subtotal = _roundTo2(item.precioUnitario * newQty);
     final impuesto = _roundTo2(subtotal * item.tasaImpuesto);
     await (update(carritoLocal)..where((c) => c.id.equals(id))).write(
@@ -116,6 +160,13 @@ class CarritoDao extends DatabaseAccessor<AppDatabase> with _$CarritoDaoMixin {
       cantidad: Value(cantidad),
       comentariosCocina: Value(comentarios),
     ));
+  }
+
+  Future<int> _getTotalQuantity() async {
+    final countExpr = carritoLocal.cantidad.sum();
+    final query = selectOnly(carritoLocal)..addColumns([countExpr]);
+    final result = await query.map((row) => row.read(countExpr) ?? 0).getSingle();
+    return result;
   }
 
   static double _roundTo2(double value) =>

@@ -147,7 +147,7 @@ class AppTheme {
           vertical: 18,
         ),
         hintStyle: GoogleFonts.manrope(
-          color: AppColors.outlineVariant.withValues(alpha: 0.5),
+          color: AppColors.outlineVariant.withValues(alpha: 0.75),
         ),
         labelStyle: GoogleFonts.manrope(
           color: AppColors.onSurfaceVariant,

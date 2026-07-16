@@ -99,9 +99,13 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       ),
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 56, 24, 36),
-          child: Column(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 36, 24, 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight - 60),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 width: 72,
@@ -146,7 +150,27 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                   color: AppColors.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.outlineVariant.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Text(
+                  'Enter the code exactly as shown in the email to continue resetting your password.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.manrope(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 28),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(6, (index) => _codeBox(index)),
@@ -190,6 +214,8 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
               const SizedBox(height: 20),
               GradientButton(text: 'VERIFY IDENTITY', onPressed: _verify),
             ],
+          ),
+        ),
           ),
         ),
       ),
@@ -238,7 +264,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+            borderSide: const BorderSide(color: AppColors.secondary, width: 1.5),
           ),
         ),
       ),

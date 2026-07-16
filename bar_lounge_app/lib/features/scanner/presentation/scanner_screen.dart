@@ -5,17 +5,18 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../data/api/dto/api_models.dart';
 import '../../../data/providers/providers.dart';
 
 /// QR Scanner screen — visually identical to the original design.
 ///
 /// Expected QR URL format:
-///   https://nocturnal-bar.app/scan?sucursal=1&mesa=5
+///   https://nocturnal-bar.app/scan?sucursal=1&mesa=5&token=abc123
 ///
 /// Flow:
 ///   1. Camera detects QR → stops camera to prevent duplicate scans.
-///   2. Parses URL, extracts [sucursalId] and [mesaId].
+///   2. Parses URL, extracts [sucursalId], [mesaId], and [qrToken].
 ///   3. Updates [sessionProvider] with the scanned IDs.
 ///   4. Calls [vincularMesa] API to bind the table server-side.
 ///   5. Navigates to /menu and shows a SnackBar with "Mesa X vinculada".
@@ -99,31 +100,44 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
 
     if (uri == null ||
         !uri.queryParameters.containsKey('sucursal') ||
-        !uri.queryParameters.containsKey('mesa')) {
-      _showErrorSnackBar('Invalid QR. Should be like: …?sucursal=X&mesa=Y');
+        !uri.queryParameters.containsKey('mesa') ||
+        !uri.queryParameters.containsKey('token')) {
+      _showErrorSnackBar(
+        'Invalid QR. Should be like: ...?sucursal=X&mesa=Y&token=Z',
+      );
       _cameraController.start();
       return;
     }
 
     final sucursalId = int.tryParse(uri.queryParameters['sucursal']!);
     final mesaId = int.tryParse(uri.queryParameters['mesa']!);
+    final qrToken = uri.queryParameters['token']?.trim();
 
     if (sucursalId == null ||
         mesaId == null ||
+        qrToken == null ||
+        qrToken.isEmpty ||
         sucursalId <= 0 ||
         mesaId <= 0) {
-      _showErrorSnackBar('Invalid QR Parameters. Must be positive integers.');
+      _showErrorSnackBar(
+        'Invalid QR parameters. Check the mesa QR and try again.',
+      );
       _cameraController.start();
       return;
     }
 
-    _processTableLinked(sucursalId: sucursalId, mesaId: mesaId);
+    _processTableLinked(
+      sucursalId: sucursalId,
+      mesaId: mesaId,
+      qrToken: qrToken,
+    );
   }
 
   /// Performs the full table-linking flow.
   Future<void> _processTableLinked({
     required int sucursalId,
     required int mesaId,
+    required String qrToken,
   }) async {
     setState(() {
       _loading = true;
@@ -140,7 +154,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       final api = ref.read(apiServiceProvider);
       final resp = await api.vincularMesa(
         VincularMesaRequest(
-          codigo_qr_mesa: 'MESA-${mesaId.toString().padLeft(2, '0')}',
+          codigo_qr_mesa: qrToken,
           numero_mesa: mesaId,
         ),
       );
@@ -150,7 +164,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
           .read(mesaDaoProvider)
           .linkTable(
             numeroMesa: mesaId,
-            codigoQr: 'MESA-${mesaId.toString().padLeft(2, '0')}',
+            codigoQr: qrToken,
             facturaUuid: resp.factura_local_uuid_activa,
           );
 
@@ -216,7 +230,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       }
     } catch (e) {
       debugPrint('[QRScanner] Error linking table: $e');
-      setState(() => _error = 'Failed to link table. Try again.');
+      setState(() => _error = ErrorHandler.getMessage(e, fallback: 'Failed to link table. Try again.'));
       // Restart camera so the user can retry.
       _cameraController.start();
     } finally {
@@ -236,7 +250,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       return;
     }
     // Default sucursalId = 1 for manual entry.
-    await _processTableLinked(sucursalId: 1, mesaId: mesaId);
+    await _processTableLinked(
+      sucursalId: 1,
+      mesaId: mesaId,
+      qrToken: 'MESA-${mesaId.toString().padLeft(2, '0')}',
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -298,9 +316,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
 
             // ── Body ─────────────────────────────────────────────────────────
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight - 24),
+                    child: Column(
                   children: [
                     const SizedBox(height: 16),
 
@@ -429,7 +450,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                           ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
                     // ── Divider ───────────────────────────────────────────────
                     Text(
@@ -489,13 +510,13 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                         letterSpacing: 8,
                       ),
                       decoration: InputDecoration(
-                        hintText: '05',
+                        hintText: 'e.g. 05',
                         hintStyle: GoogleFonts.epilogue(
                           fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 8,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 4,
                           color: AppColors.outlineVariant.withValues(
-                            alpha: 0.3,
+                            alpha: 0.4,
                           ),
                         ),
                       ),
@@ -536,11 +557,47 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                       ),
                     ),
 
-                    const SizedBox(height: 120),
+                    const SizedBox(height: 18),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.outlineVariant.withValues(alpha: 0.18),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'How it works',
+                            style: GoogleFonts.epilogue(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Scan the QR at your table or enter the table number manually to link your session before ordering.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.manrope(
+                              fontSize: 13,
+                              height: 1.45,
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
             ),
+          ),
+        ),
           ],
         ),
       ),

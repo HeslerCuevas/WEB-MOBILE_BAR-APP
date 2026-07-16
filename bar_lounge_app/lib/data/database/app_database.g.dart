@@ -989,6 +989,16 @@ class $ProductosCacheTable extends ProductosCache
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _cantidadDisponibleMeta =
+      const VerificationMeta('cantidadDisponible');
+  @override
+  late final GeneratedColumn<int> cantidadDisponible = GeneratedColumn<int>(
+    'cantidad_disponible',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _categoriaIdMeta = const VerificationMeta(
     'categoriaId',
   );
@@ -1026,6 +1036,7 @@ class $ProductosCacheTable extends ProductosCache
     tasaImpuesto,
     estaDisponible,
     imagenUrl,
+    cantidadDisponible,
     categoriaId,
     sincronizadoEn,
   ];
@@ -1099,6 +1110,15 @@ class $ProductosCacheTable extends ProductosCache
         imagenUrl.isAcceptableOrUnknown(data['imagen_url']!, _imagenUrlMeta),
       );
     }
+    if (data.containsKey('cantidad_disponible')) {
+      context.handle(
+        _cantidadDisponibleMeta,
+        cantidadDisponible.isAcceptableOrUnknown(
+          data['cantidad_disponible']!,
+          _cantidadDisponibleMeta,
+        ),
+      );
+    }
     if (data.containsKey('categoria_id')) {
       context.handle(
         _categoriaIdMeta,
@@ -1165,6 +1185,10 @@ class $ProductosCacheTable extends ProductosCache
         DriftSqlType.string,
         data['${effectivePrefix}imagen_url'],
       ),
+      cantidadDisponible: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cantidad_disponible'],
+      ),
       categoriaId:
           attachedDatabase.typeMapping.read(
             DriftSqlType.int,
@@ -1194,6 +1218,7 @@ class ProductosCacheData extends DataClass
   final double tasaImpuesto;
   final bool estaDisponible;
   final String? imagenUrl;
+  final int? cantidadDisponible;
   final int categoriaId;
   final DateTime sincronizadoEn;
   const ProductosCacheData({
@@ -1205,6 +1230,7 @@ class ProductosCacheData extends DataClass
     required this.tasaImpuesto,
     required this.estaDisponible,
     this.imagenUrl,
+    this.cantidadDisponible,
     required this.categoriaId,
     required this.sincronizadoEn,
   });
@@ -1224,6 +1250,9 @@ class ProductosCacheData extends DataClass
     map['esta_disponible'] = Variable<bool>(estaDisponible);
     if (!nullToAbsent || imagenUrl != null) {
       map['imagen_url'] = Variable<String>(imagenUrl);
+    }
+    if (!nullToAbsent || cantidadDisponible != null) {
+      map['cantidad_disponible'] = Variable<int>(cantidadDisponible);
     }
     map['categoria_id'] = Variable<int>(categoriaId);
     map['sincronizado_en'] = Variable<DateTime>(sincronizadoEn);
@@ -1246,6 +1275,10 @@ class ProductosCacheData extends DataClass
           imagenUrl == null && nullToAbsent
               ? const Value.absent()
               : Value(imagenUrl),
+      cantidadDisponible:
+          cantidadDisponible == null && nullToAbsent
+              ? const Value.absent()
+              : Value(cantidadDisponible),
       categoriaId: Value(categoriaId),
       sincronizadoEn: Value(sincronizadoEn),
     );
@@ -1265,6 +1298,7 @@ class ProductosCacheData extends DataClass
       tasaImpuesto: serializer.fromJson<double>(json['tasaImpuesto']),
       estaDisponible: serializer.fromJson<bool>(json['estaDisponible']),
       imagenUrl: serializer.fromJson<String?>(json['imagenUrl']),
+      cantidadDisponible: serializer.fromJson<int?>(json['cantidadDisponible']),
       categoriaId: serializer.fromJson<int>(json['categoriaId']),
       sincronizadoEn: serializer.fromJson<DateTime>(json['sincronizadoEn']),
     );
@@ -1281,6 +1315,7 @@ class ProductosCacheData extends DataClass
       'tasaImpuesto': serializer.toJson<double>(tasaImpuesto),
       'estaDisponible': serializer.toJson<bool>(estaDisponible),
       'imagenUrl': serializer.toJson<String?>(imagenUrl),
+      'cantidadDisponible': serializer.toJson<int?>(cantidadDisponible),
       'categoriaId': serializer.toJson<int>(categoriaId),
       'sincronizadoEn': serializer.toJson<DateTime>(sincronizadoEn),
     };
@@ -1295,6 +1330,7 @@ class ProductosCacheData extends DataClass
     double? tasaImpuesto,
     bool? estaDisponible,
     Value<String?> imagenUrl = const Value.absent(),
+    Value<int?> cantidadDisponible = const Value.absent(),
     int? categoriaId,
     DateTime? sincronizadoEn,
   }) => ProductosCacheData(
@@ -1306,6 +1342,10 @@ class ProductosCacheData extends DataClass
     tasaImpuesto: tasaImpuesto ?? this.tasaImpuesto,
     estaDisponible: estaDisponible ?? this.estaDisponible,
     imagenUrl: imagenUrl.present ? imagenUrl.value : this.imagenUrl,
+    cantidadDisponible:
+        cantidadDisponible.present
+            ? cantidadDisponible.value
+            : this.cantidadDisponible,
     categoriaId: categoriaId ?? this.categoriaId,
     sincronizadoEn: sincronizadoEn ?? this.sincronizadoEn,
   );
@@ -1327,6 +1367,10 @@ class ProductosCacheData extends DataClass
               ? data.estaDisponible.value
               : this.estaDisponible,
       imagenUrl: data.imagenUrl.present ? data.imagenUrl.value : this.imagenUrl,
+      cantidadDisponible:
+          data.cantidadDisponible.present
+              ? data.cantidadDisponible.value
+              : this.cantidadDisponible,
       categoriaId:
           data.categoriaId.present ? data.categoriaId.value : this.categoriaId,
       sincronizadoEn:
@@ -1347,6 +1391,7 @@ class ProductosCacheData extends DataClass
           ..write('tasaImpuesto: $tasaImpuesto, ')
           ..write('estaDisponible: $estaDisponible, ')
           ..write('imagenUrl: $imagenUrl, ')
+          ..write('cantidadDisponible: $cantidadDisponible, ')
           ..write('categoriaId: $categoriaId, ')
           ..write('sincronizadoEn: $sincronizadoEn')
           ..write(')'))
@@ -1363,6 +1408,7 @@ class ProductosCacheData extends DataClass
     tasaImpuesto,
     estaDisponible,
     imagenUrl,
+    cantidadDisponible,
     categoriaId,
     sincronizadoEn,
   );
@@ -1378,6 +1424,7 @@ class ProductosCacheData extends DataClass
           other.tasaImpuesto == this.tasaImpuesto &&
           other.estaDisponible == this.estaDisponible &&
           other.imagenUrl == this.imagenUrl &&
+          other.cantidadDisponible == this.cantidadDisponible &&
           other.categoriaId == this.categoriaId &&
           other.sincronizadoEn == this.sincronizadoEn);
 }
@@ -1391,6 +1438,7 @@ class ProductosCacheCompanion extends UpdateCompanion<ProductosCacheData> {
   final Value<double> tasaImpuesto;
   final Value<bool> estaDisponible;
   final Value<String?> imagenUrl;
+  final Value<int?> cantidadDisponible;
   final Value<int> categoriaId;
   final Value<DateTime> sincronizadoEn;
   const ProductosCacheCompanion({
@@ -1402,6 +1450,7 @@ class ProductosCacheCompanion extends UpdateCompanion<ProductosCacheData> {
     this.tasaImpuesto = const Value.absent(),
     this.estaDisponible = const Value.absent(),
     this.imagenUrl = const Value.absent(),
+    this.cantidadDisponible = const Value.absent(),
     this.categoriaId = const Value.absent(),
     this.sincronizadoEn = const Value.absent(),
   });
@@ -1414,6 +1463,7 @@ class ProductosCacheCompanion extends UpdateCompanion<ProductosCacheData> {
     this.tasaImpuesto = const Value.absent(),
     this.estaDisponible = const Value.absent(),
     this.imagenUrl = const Value.absent(),
+    this.cantidadDisponible = const Value.absent(),
     required int categoriaId,
     this.sincronizadoEn = const Value.absent(),
   }) : nombre = Value(nombre),
@@ -1428,6 +1478,7 @@ class ProductosCacheCompanion extends UpdateCompanion<ProductosCacheData> {
     Expression<double>? tasaImpuesto,
     Expression<bool>? estaDisponible,
     Expression<String>? imagenUrl,
+    Expression<int>? cantidadDisponible,
     Expression<int>? categoriaId,
     Expression<DateTime>? sincronizadoEn,
   }) {
@@ -1440,6 +1491,7 @@ class ProductosCacheCompanion extends UpdateCompanion<ProductosCacheData> {
       if (tasaImpuesto != null) 'tasa_impuesto': tasaImpuesto,
       if (estaDisponible != null) 'esta_disponible': estaDisponible,
       if (imagenUrl != null) 'imagen_url': imagenUrl,
+      if (cantidadDisponible != null) 'cantidad_disponible': cantidadDisponible,
       if (categoriaId != null) 'categoria_id': categoriaId,
       if (sincronizadoEn != null) 'sincronizado_en': sincronizadoEn,
     });
@@ -1454,6 +1506,7 @@ class ProductosCacheCompanion extends UpdateCompanion<ProductosCacheData> {
     Value<double>? tasaImpuesto,
     Value<bool>? estaDisponible,
     Value<String?>? imagenUrl,
+    Value<int?>? cantidadDisponible,
     Value<int>? categoriaId,
     Value<DateTime>? sincronizadoEn,
   }) {
@@ -1466,6 +1519,7 @@ class ProductosCacheCompanion extends UpdateCompanion<ProductosCacheData> {
       tasaImpuesto: tasaImpuesto ?? this.tasaImpuesto,
       estaDisponible: estaDisponible ?? this.estaDisponible,
       imagenUrl: imagenUrl ?? this.imagenUrl,
+      cantidadDisponible: cantidadDisponible ?? this.cantidadDisponible,
       categoriaId: categoriaId ?? this.categoriaId,
       sincronizadoEn: sincronizadoEn ?? this.sincronizadoEn,
     );
@@ -1498,6 +1552,9 @@ class ProductosCacheCompanion extends UpdateCompanion<ProductosCacheData> {
     if (imagenUrl.present) {
       map['imagen_url'] = Variable<String>(imagenUrl.value);
     }
+    if (cantidadDisponible.present) {
+      map['cantidad_disponible'] = Variable<int>(cantidadDisponible.value);
+    }
     if (categoriaId.present) {
       map['categoria_id'] = Variable<int>(categoriaId.value);
     }
@@ -1518,6 +1575,7 @@ class ProductosCacheCompanion extends UpdateCompanion<ProductosCacheData> {
           ..write('tasaImpuesto: $tasaImpuesto, ')
           ..write('estaDisponible: $estaDisponible, ')
           ..write('imagenUrl: $imagenUrl, ')
+          ..write('cantidadDisponible: $cantidadDisponible, ')
           ..write('categoriaId: $categoriaId, ')
           ..write('sincronizadoEn: $sincronizadoEn')
           ..write(')'))
@@ -6120,6 +6178,7 @@ typedef $$ProductosCacheTableCreateCompanionBuilder =
       Value<double> tasaImpuesto,
       Value<bool> estaDisponible,
       Value<String?> imagenUrl,
+      Value<int?> cantidadDisponible,
       required int categoriaId,
       Value<DateTime> sincronizadoEn,
     });
@@ -6133,6 +6192,7 @@ typedef $$ProductosCacheTableUpdateCompanionBuilder =
       Value<double> tasaImpuesto,
       Value<bool> estaDisponible,
       Value<String?> imagenUrl,
+      Value<int?> cantidadDisponible,
       Value<int> categoriaId,
       Value<DateTime> sincronizadoEn,
     });
@@ -6243,6 +6303,11 @@ class $$ProductosCacheTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get cantidadDisponible => $composableBuilder(
+    column: $table.cantidadDisponible,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<DateTime> get sincronizadoEn => $composableBuilder(
     column: $table.sincronizadoEn,
     builder: (column) => ColumnFilters(column),
@@ -6346,6 +6411,11 @@ class $$ProductosCacheTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get cantidadDisponible => $composableBuilder(
+    column: $table.cantidadDisponible,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get sincronizadoEn => $composableBuilder(
     column: $table.sincronizadoEn,
     builder: (column) => ColumnOrderings(column),
@@ -6415,6 +6485,11 @@ class $$ProductosCacheTableAnnotationComposer
 
   GeneratedColumn<String> get imagenUrl =>
       $composableBuilder(column: $table.imagenUrl, builder: (column) => column);
+
+  GeneratedColumn<int> get cantidadDisponible => $composableBuilder(
+    column: $table.cantidadDisponible,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get sincronizadoEn => $composableBuilder(
     column: $table.sincronizadoEn,
@@ -6512,6 +6587,7 @@ class $$ProductosCacheTableTableManager
                 Value<double> tasaImpuesto = const Value.absent(),
                 Value<bool> estaDisponible = const Value.absent(),
                 Value<String?> imagenUrl = const Value.absent(),
+                Value<int?> cantidadDisponible = const Value.absent(),
                 Value<int> categoriaId = const Value.absent(),
                 Value<DateTime> sincronizadoEn = const Value.absent(),
               }) => ProductosCacheCompanion(
@@ -6523,6 +6599,7 @@ class $$ProductosCacheTableTableManager
                 tasaImpuesto: tasaImpuesto,
                 estaDisponible: estaDisponible,
                 imagenUrl: imagenUrl,
+                cantidadDisponible: cantidadDisponible,
                 categoriaId: categoriaId,
                 sincronizadoEn: sincronizadoEn,
               ),
@@ -6536,6 +6613,7 @@ class $$ProductosCacheTableTableManager
                 Value<double> tasaImpuesto = const Value.absent(),
                 Value<bool> estaDisponible = const Value.absent(),
                 Value<String?> imagenUrl = const Value.absent(),
+                Value<int?> cantidadDisponible = const Value.absent(),
                 required int categoriaId,
                 Value<DateTime> sincronizadoEn = const Value.absent(),
               }) => ProductosCacheCompanion.insert(
@@ -6547,6 +6625,7 @@ class $$ProductosCacheTableTableManager
                 tasaImpuesto: tasaImpuesto,
                 estaDisponible: estaDisponible,
                 imagenUrl: imagenUrl,
+                cantidadDisponible: cantidadDisponible,
                 categoriaId: categoriaId,
                 sincronizadoEn: sincronizadoEn,
               ),
