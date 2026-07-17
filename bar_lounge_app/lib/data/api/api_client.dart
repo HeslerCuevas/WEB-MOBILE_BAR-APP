@@ -2,29 +2,54 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/router/app_router.dart';
+import 'package:http/http.dart' as http;
 
+const AZURE_URL = 'integration-api-bar-gsd2h5d0bmbddfh6.eastus2-01.azurewebsites.net';
+const LOCAL_URL = 'http://localhost:8001/api/v1';
 
-class ApiClient {
-  static const String _tokenKey = 'access_token';
-  static const String _clientIdKey = 'cliente_id';
-
-
-  static String get _baseUrl {
+class ApiConfig {
+  static const String _azureUrl = LOCAL_URL; // Change this to AZURE_URL when deploying to production
+  
+  static String get localUrl {
     if (Platform.isAndroid) {
       return 'http://10.0.2.2:8001/api/v1';
     }
     return 'http://localhost:8001/api/v1';
   }
 
+  static Future<String> getActiveBaseUrl() async {
+    try {
+      // 2-second timeout to keep the check fast
+      final response = await http.head(Uri.parse(_azureUrl))
+          .timeout(const Duration(seconds: 2)); 
+      
+      if (response.statusCode < 400) {
+        print("🚀 Connected to Azure Cloud Integration Gateway");
+        return _azureUrl;
+      }
+    } catch (e) {
+      print("🔌 Azure unreachable or offline. Falling back to Local Environment.");
+    }
+    return localUrl;
+  }
+}
+
+class ApiClient {
+  static const String _tokenKey = 'access_token';
+  static const String _clientIdKey = 'cliente_id';
 
   final Dio dio;
   final FlutterSecureStorage _storage;
 
+  // Cache to store the URL after the first check so we don't ping Azure on every single request
+  static String? _resolvedBaseUrl;
+
   ApiClient({Dio? dio, FlutterSecureStorage? storage})
       : dio = dio ?? Dio(),
         _storage = storage ?? const FlutterSecureStorage() {
+        
     this.dio.options = BaseOptions(
-      baseUrl: _baseUrl,
+      // We leave baseUrl empty here because the interceptor will assign it dynamically
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 15),
       headers: {
@@ -33,10 +58,17 @@ class ApiClient {
       },
     );
 
-
     this.dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          // --- NEW DYNAMIC URL CHECK ---
+          if (_resolvedBaseUrl == null) {
+            _resolvedBaseUrl = await ApiConfig.getActiveBaseUrl();
+            this.dio.options.baseUrl = _resolvedBaseUrl!;
+          }
+          // Force the current request to use the resolved URL
+          options.baseUrl = _resolvedBaseUrl!;
+          // ------------------------------
 
           final path = options.path;
 
@@ -66,7 +98,6 @@ class ApiClient {
           if (statusCode == 401) {
             final storedToken = await _storage.read(key: _tokenKey);
             if (storedToken == null || storedToken.isEmpty) {
-
               await _storage.delete(key: _clientIdKey);
               try {
                 appRouter.go('/login', extra: 'Your session has expired, please log in again');
@@ -81,7 +112,6 @@ class ApiClient {
         },
       ),
     );
-
 
     this.dio.interceptors.add(
       LogInterceptor(
