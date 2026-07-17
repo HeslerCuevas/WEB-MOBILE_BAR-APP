@@ -98,7 +98,9 @@ final activeOrderProvider = StreamProvider<HistorialPedido?>((ref) {
           order.estadoCuenta != 'PAGADA' &&
           order.estadoCuenta != 'PAGADO' &&
           order.estadoCuenta != 'COMPLETADA' &&
-          order.estadoCuenta != 'COMPLETADO') {
+          order.estadoCuenta != 'COMPLETADO' &&
+          order.estadoCuenta != 'CANCELADO' &&
+          order.estadoCuenta != 'CANCELLED') {
         return order;
       }
     }
@@ -194,4 +196,3 @@ class SessionNotifier extends Notifier<SessionState> {
 final sessionProvider = NotifierProvider<SessionNotifier, SessionState>(
   SessionNotifier.new,
 );
-

@@ -1058,6 +1058,16 @@ class _BillSummaryScreenState extends ConsumerState<BillSummaryScreen> {
                     height: 1.15,
                   ),
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  'Qty ${item.cantidad}',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.manrope(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ),

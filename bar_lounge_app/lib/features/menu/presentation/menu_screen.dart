@@ -444,15 +444,15 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                   bottom: 6, right: 6,
                   child: p.cantidadDisponible! <= 0
                     ? Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(color: AppColors.error, borderRadius: BorderRadius.circular(4)),
-                        child: Text('OUT OF STOCK', style: GoogleFonts.manrope(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white)),
+                        child: Text('OUT OF STOCK', style: GoogleFonts.manrope(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
                       )
                     : (p.cantidadDisponible! <= 5
                         ? Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(4)),
-                            child: Text('ONLY ${p.cantidadDisponible} LEFT', style: GoogleFonts.manrope(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white)),
+                            child: Text('ONLY ${p.cantidadDisponible} LEFT', style: GoogleFonts.manrope(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
                           )
                         : const SizedBox.shrink()),
                 ),

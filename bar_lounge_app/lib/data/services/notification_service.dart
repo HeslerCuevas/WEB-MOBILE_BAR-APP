@@ -114,14 +114,22 @@ class NotificationService {
   }
 
   static Future<void> handleBackgroundMessage(RemoteMessage message) async {
-    if (message.data['action'] == 'ORDER_PAID') {
+    // Notification+data messages are already displayed by Android/iOS while
+    // the app is backgrounded. Avoid showing a duplicate local notification.
+    if (message.notification != null) return;
+    if (message.data['action'] == 'ORDER_PAID' ||
+        message.data['action'] == 'ORDER_PAYMENT_FAILED') {
       final uuid = message.data['factura_uuid'];
 
       if (uuid != null) {
+        final failed = message.data['action'] == 'ORDER_PAYMENT_FAILED';
         await showNotification(
           id: uuid.hashCode,
-          title: '¡Pago Confirmado!',
-          body: 'Tu cuenta ha sido pagada. ¡Gracias por visitarnos!',
+          title: failed ? 'Pago no procesado' : 'Pago confirmado',
+          body:
+              failed
+                  ? 'El bar rechazó el pago de tu orden. Contacta a tu servidor.'
+                  : 'Tu cuenta ha sido pagada. ¡Gracias por visitarnos!',
         );
       }
     }

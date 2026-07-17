@@ -33,7 +33,9 @@ class ApiService {
 
     await _client.saveToken(loginResponse.access_token, clienteId: loginResponse.cliente_id);
 
-    _registerFCMToken();
+    // Do not leave a small race between customer login and a payment made at
+    // CAJA.  The token must be persisted before login is reported as complete.
+    await _registerFCMToken();
 
     return loginResponse;
   }
@@ -43,13 +45,15 @@ class ApiService {
     try {
       String plataforma = Platform.isAndroid ? "Android" : "iOS"; 
       final String? token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
+      if (token != null && token.isNotEmpty) {
         await _client.dio.post(
           '/clientes/auth/registrar-dispositivo',
           data: {'fcm_token': token,
         'plataforma': plataforma,},
         );
         print('[FCM] Token successfully registered');
+      } else {
+        print('[FCM] No device token is available yet; it will be retried when the app resumes or the token refreshes.');
       }
     } catch (e) {
       print('[FCM Error] Could not register token: $e');
